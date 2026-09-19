@@ -1,0 +1,5 @@
+# The data branch is only ever committed to from inside the .gitkontor/ worktree itself.
+.gitkontor/
+
+# Every working branch lives here, not as a sibling directory.
+.worktrees/
