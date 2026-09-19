@@ -1,7 +1,17 @@
 {
   "pulls": {
-    "at": 1789805090.291324,
+    "at": 1789805799.971183,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "feature/vc-4-customer-behaviour",
+        "index": "8",
+        "state": "merged",
+        "title": "feat(villager_customers): the customer: restock roll, shopping trip behaviour in WORK, walk, arrival hand-off, cancel and cooldown (VC-4)",
+        "updated": "2026-09-19T08:05:17Z"
+      },
       {
         "author": "scheeren",
         "base": "development",

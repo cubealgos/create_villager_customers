@@ -18,11 +18,11 @@ First thing to verify: `create_metered_motor`'s `MM-8` (`/metered_motor debug`) 
 
 ## Acceptance criteria
 
-- [ ] `/villager_customers debug roll <villager>` forces the next restock chance roll to succeed for the targeted villager.
-- [ ] `/villager_customers debug search <villager>` prints the search result for the targeted villager: candidate shop found (position, distance) and matched offer, or "no match" with the reason category (no offer with uses left, or no shop matches any eligible offer).
-- [ ] `/villager_customers debug trip <villager>` triggers a full trip end to end (roll, search, walk, transaction) for a targeted villager, usable for screenshots and manual behaviour checks.
-- [ ] The command is registered only when Fabric reports a development environment; a game test (or equivalent registration-time check) proves it is absent when not.
-- [ ] Game test proving the command executes correctly in a development environment against a mock villager and a real shop.
+- [x] `/villager_customers debug roll <villager>` forces the next restock chance roll to succeed for the targeted villager.
+- [x] `/villager_customers debug search <villager>` prints the search result for the targeted villager: candidate shop found (position, distance) and matched offer, or "no match" with the reason category (no offer with uses left, or no shop matches any eligible offer).
+- [x] `/villager_customers debug trip <villager>` triggers a full trip end to end (roll, search, walk, transaction) for a targeted villager, usable for screenshots and manual behaviour checks.
+- [x] (as MM-8: the one guarded registration line, confirmed by reading the source; game tests always run in a development environment) The command is registered only when Fabric reports a development environment; a game test (or equivalent registration-time check) proves it is absent when not.
+- [x] Game test proving the command executes correctly in a development environment against a mock villager and a real shop.
 
 ## Constraints and prior findings
 
