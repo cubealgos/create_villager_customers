@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "villager_customers_gametest",
+  "version": "1.0.0",
+  "name": "Villager Customers game tests",
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": {
+    "fabric-gametest": [
+      "villager_customers.gametest.SmokeGameTest"
+    ]
+  },
+  "depends": {
+    "villager_customers": "*"
+  }
+}
