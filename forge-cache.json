@@ -1,7 +1,17 @@
 {
   "pulls": {
-    "at": 1789801442.956199,
+    "at": 1789802692.450217,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "documentation/vc-7-modrinth-assets",
+        "index": "2",
+        "state": "merged",
+        "title": "docs(villager_customers): Modrinth listing assets ahead of the release: badge icon, body and settings, gallery shot list (VC-7)",
+        "updated": "2026-09-19T07:04:50Z"
+      },
       {
         "author": "scheeren",
         "base": "development",
