@@ -12,7 +12,8 @@
       "villager_customers.gametest.ShopViewGameTest",
       "villager_customers.gametest.ShopSearchGameTest",
       "villager_customers.gametest.TransactionGameTest",
-      "villager_customers.gametest.RefusalGameTest"
+      "villager_customers.gametest.RefusalGameTest",
+      "villager_customers.gametest.ShoppingTripGameTest"
     ]
   },
   "depends": {

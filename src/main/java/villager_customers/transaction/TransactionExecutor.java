@@ -104,7 +104,13 @@ public final class TransactionExecutor {
         }
     }
 
-    private static boolean matches(MerchantOffer offer, ShopAccess shop) {
+    /**
+     * Whether {@code offer} and {@code shop} mirror each other (`TRANSACTION-REQ-001`), exposed
+     * {@code public} for {@code VC-4}'s restock search, which needs the same match rule this
+     * executor uses to test an offer against a candidate shop before remembering it as a trip target
+     * (`docs/spec/domains/customer.md` `CUSTOMER-REQ-003`).
+     */
+    public static boolean matches(MerchantOffer offer, ShopAccess shop) {
         StackShape offerCost = shapeOf(offer.getCostA());
         Optional<StackShape> offerSecondCost = offer.getItemCostB().map(cost -> shapeOf(cost.itemStack()));
         StackShape offerResult = shapeOf(offer.getResult());
