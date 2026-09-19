@@ -18,12 +18,12 @@ First thing to verify — the two open questions `domains/shop.md` §7 and `04-a
 
 ## Acceptance criteria
 
-- [ ] `PoiType` `villager_customers:table_cloth_shop` registered over every Create Fly table-cloth block state, confirmed by listing the state set found in the jar read above (`SHOP-REQ-001`).
-- [ ] `Shop.isShop()` is true only when price and goods are both non-empty and the linked stock ticker reports a keeper present; false the moment any of those breaks, with no unregistration step needed (`SHOP-REQ-002`, `SHOP-REQ-003`, shop candidacy state table in `domains/shop.md` §3).
-- [ ] `ShopSearch` restricts candidates to the requesting villager's own village POI membership (vanilla's own reach, no invented distance) and, given more than one match, returns the nearest (`SHOP-REQ-004`, `SHOP-DEC-001`).
-- [ ] No new screen, block or item is added by this ticket — confirmed by review against `SHOP-REQ-005`.
-- [ ] Game test: a table cloth placed and configured (price, goods, linked stock ticker with a keeper present) in a test world is found through the village POI index by `ShopSearch` (`TableClothPoiGameTest`).
-- [ ] Game test: shophood flips to false — and the POI is no longer returned as a candidate — when the price is cleared, and separately when the linked stock ticker is removed or unlinked, with no world-state left over (`ShopCandidacyGameTest`, `SHOP-REQ-006` precondition; the arrival-time recheck itself is `VC-4`'s).
+- [x] `PoiType` `villager_customers:table_cloth_shop` registered over every Create Fly table-cloth block state, confirmed by listing the state set found in the jar read above (`SHOP-REQ-001`).
+- [x] `Shop.isShop()` is true only when price and goods are both non-empty and the linked stock ticker reports a keeper present; false the moment any of those breaks, with no unregistration step needed (`SHOP-REQ-002`, `SHOP-REQ-003`, shop candidacy state table in `domains/shop.md` §3).
+- [x] `ShopSearch` restricts candidates to the requesting villager's own village POI membership (vanilla's own reach, no invented distance) and, given more than one match, returns the nearest (`SHOP-REQ-004`, `SHOP-DEC-001`).
+- [x] No new screen, block or item is added by this ticket — confirmed by review against `SHOP-REQ-005`.
+- [x] Game test: a table cloth placed and configured (price, goods, linked stock ticker with a keeper present) in a test world is found through the village POI index by `ShopSearch` (`ShopPoiGameTest`, `ShopSearchGameTest`; named differently from the plan).
+- [x] Game test: shophood flips to false — and the POI is no longer returned as a candidate — when the price is cleared, and separately when the linked stock ticker is removed or unlinked, with no world-state left over (`ShopViewGameTest`, `SHOP-REQ-006` precondition; the arrival-time recheck itself is `VC-4`'s).
 
 ## Constraints and prior findings
 

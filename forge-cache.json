@@ -1,7 +1,27 @@
 {
   "pulls": {
-    "at": 1789802692.450217,
+    "at": 1789803192.8687072,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "feature/vc-3-transaction",
+        "index": "4",
+        "state": "merged",
+        "title": "test(villager_customers): a mod-driven unit leaves the offer's demand and the villager's reputation untouched (VC-3)",
+        "updated": "2026-09-19T07:29:56Z"
+      },
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "feature/vc-3-transaction",
+        "index": "3",
+        "state": "merged",
+        "title": "feat(villager_customers): the transaction: match rule, direct draw from the network stock, payment and nuggets into the box, uses and xp (VC-3)",
+        "updated": "2026-09-19T07:29:56Z"
+      },
       {
         "author": "scheeren",
         "base": "development",
