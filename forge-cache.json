@@ -1,7 +1,17 @@
 {
   "pulls": {
-    "at": 1789805799.971183,
+    "at": 1789833230.437792,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "feature/vc-5-debug-command",
+        "index": "9",
+        "state": "merged",
+        "title": "feat(villager_customers): development-only /villager_customers debug: roll, search and trip for a targeted villager (VC-5)",
+        "updated": "2026-09-19T08:16:52Z"
+      },
       {
         "author": "scheeren",
         "base": "development",
