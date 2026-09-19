@@ -45,7 +45,7 @@ patterns = [
 [ruleset.conventional_commits]
 enabled = true
 # Scope is REQUIRED, and there is no merge or release exemption — every commit conforms.
-allowed_scopes = ["create_villager_customers"]
+allowed_scopes = ["create_villager_customers", "villager_customers"]
 require_ticket_ref = true
 # Opt in once the scope list is genuinely curated; until then an uncurated list would reject
 # every commit whose scope is simply not listed yet.
