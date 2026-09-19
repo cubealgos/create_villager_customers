@@ -45,7 +45,7 @@ A small, real Create Fly logistics network for the transaction game tests: a che
     Two independent chest-and-packager sources sharing one stock ticker.
 
 ### `class TransactionGameTest` — `src/gametest/java/villager_customers/gametest/TransactionGameTest.java`
-VC-3: a matched offer executed against a real chest-and-packager network draws the goods, pays the price and xp nuggets, and advances the offer's uses and the villager's trade xp — one unit per visit while stock and uses allow (`docs/spec/domains/transaction.md` `TRANSACTION-REQ-004` through `TRANSACTION-REQ-007`).
+VC-3: a matched offer executed against a real chest-and-packager network draws the goods, pays the price and xp nuggets, and advances the offer's uses and the villager's trade xp — one unit per visit while stock and uses allow (`docs/spec/domains/transaction.md` `TRANSACTION-REQ-004` through `TRANSACTION-REQ-007`) — while the offer's demand and the villager's reputation toward a player stay exactly as they were, since a mod-driven unit involves no player (`TRANSACTION-REQ-009`).
 - `void aMatchedOfferDrawsPaysAndAdvancesUsesOneVisitAtATime(GameTestHelper helper)`
 - `int chestWheatCount(TestShopNetwork network)`
 - `boolean paymentBoxHolds(TestShopNetwork network, Item item, int count)`
