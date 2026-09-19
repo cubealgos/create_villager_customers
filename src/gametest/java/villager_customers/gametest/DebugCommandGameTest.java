@@ -79,6 +79,66 @@ public final class DebugCommandGameTest {
         });
     }
 
+    /**
+     * VC-6 sweep gap: {@code CUSTOMER-REQ-009}/{@code CUSTOMER-FAIL-004}'s two idle-with-no-error
+     * outcomes of a search were implemented (`CustomerHooks.Search.Reason`) but never exercised by a
+     * test — only the {@code MATCH} path was. A freshly spawned villager has no profession and so no
+     * offers at all (VC-4's own finding), so {@code search} reports {@code no_offer} with nothing
+     * else set up.
+     */
+    @GameTest
+    public void searchReportsNoOfferWithUsesLeft(GameTestHelper helper) {
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
+
+        helper.runAfterDelay(2, () -> {
+            CapturingSource capturing = new CapturingSource();
+            CommandSourceStack source = sourceFor(helper, capturing, villager);
+            helper.getLevel().getServer().getCommands().performPrefixedCommand(source, "villager_customers debug search " + villager.getUUID());
+
+            helper.assertTrue(
+                capturing.hasKey("command.villager_customers.debug.search.no_offer"),
+                "a villager with no offers reports no offer with uses left: " + capturing.describe()
+            );
+            helper.assertTrue(
+                !villager.getBrain().hasMemoryValue(CustomerMemoryModules.SHOPPING_TRIP_TARGET), "search is read-only: no trip memory was set"
+            );
+            helper.succeed();
+        });
+    }
+
+    /**
+     * VC-6 sweep gap, same finding as {@link #searchReportsNoOfferWithUsesLeft}: an eligible offer
+     * with no reachable shop at all. {@code CustomerHooks.search} runs at the full production
+     * {@code ShopSearch.VILLAGE_REACH} (48 blocks), which — as {@code ShopSearchGameTest}'s own
+     * Javadoc documents — reaches into neighbouring game-test structures roughly a dozen blocks
+     * away; most of this suite's shops share the same wheat-for-emerald shape, so a plain
+     * {@link #freshOffer()} here found one of theirs on first attempt (caught by this ticket's own
+     * `just check` run, not by inspection). An offer shaped nothing like any shop this suite builds
+     * — including {@code ShoppingTripGameTest}'s own diamond/netherite-ingot one, VC-6's other new
+     * gap-closing test — avoids that false match regardless of which neighbours happen to be in
+     * range.
+     */
+    @GameTest
+    public void searchReportsNoShopMatchingOffer(GameTestHelper helper) {
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
+        villager.getOffers().add(new MerchantOffer(new ItemCost(Items.GOLD_BLOCK, 3), new ItemStack(Items.EMERALD_BLOCK, 2), 2, 10, 0.0f));
+
+        helper.runAfterDelay(2, () -> {
+            CapturingSource capturing = new CapturingSource();
+            CommandSourceStack source = sourceFor(helper, capturing, villager);
+            helper.getLevel().getServer().getCommands().performPrefixedCommand(source, "villager_customers debug search " + villager.getUUID());
+
+            helper.assertTrue(
+                capturing.hasKey("command.villager_customers.debug.search.no_shop"),
+                "an eligible offer with no reachable shop reports no shop matching: " + capturing.describe()
+            );
+            helper.assertTrue(
+                !villager.getBrain().hasMemoryValue(CustomerMemoryModules.SHOPPING_TRIP_TARGET), "search is read-only: no trip memory was set"
+            );
+            helper.succeed();
+        });
+    }
+
     @GameTest
     public void rollSetsTheForcedFlag(GameTestHelper helper) {
         Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));

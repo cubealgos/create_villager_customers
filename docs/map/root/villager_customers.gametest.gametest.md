@@ -8,6 +8,8 @@ signature is the contract; read the source only when the summary is not enough.
 ### `class DebugCommandGameTest` — `src/gametest/java/villager_customers/gametest/DebugCommandGameTest.java`
 VC-5's three acceptance-criteria game tests for villager_customers.debug.DebugCommand, run in the game test environment, which is itself a development environment (`FabricLoader.isDevelopmentEnvironment()` is true under runGameTest, exactly as it is under runClient), so the command is registered and reachable here.
 - `void searchPrintsAMatchAgainstARealShop(GameTestHelper helper)`
+- `void searchReportsNoOfferWithUsesLeft(GameTestHelper helper)` — VC-6 sweep gap: CUSTOMER-REQ-009/CUSTOMER-FAIL-004's two idle-with-no-error outcomes of a search were implemented (`CustomerHooks.Search.Reason`) but never exercised by a test — only the MATCH path was.
+- `void searchReportsNoShopMatchingOffer(GameTestHelper helper)` — VC-6 sweep gap, same finding as #searchReportsNoOfferWithUsesLeft: an eligible offer with no reachable shop at all.
 - `void rollSetsTheForcedFlag(GameTestHelper helper)`
 - `void tripEndsWithThePaymentBoxHoldingThePriceWithinTheTimeout(GameTestHelper helper)`
 
@@ -25,6 +27,7 @@ Vanilla's own point-of-interest discovery — the block place/break hook and the
 ### `class ShopSearchGameTest` — `src/gametest/java/villager_customers/gametest/ShopSearchGameTest.java`
 Two shops, one nearer: ShopSearch#near returns the nearer one first (VC-2, `SHOP-DEC-001`).
 - `void nearestShopComesFirst(GameTestHelper helper)`
+- `void aShopBeyondTheSearchRadiusIsInvisibleToTheSearch(GameTestHelper helper)` — VC-6 sweep gap: `SHOP-REQ-004`'s "no distance beyond vanilla's own added" and `SHOP-FAIL-001` ("table cloth built outside any village's reach ...
 - `void bothClothsOnAKeeperlessSharedTickerWaitTogether(GameTestHelper helper)` — Two cloths sharing one stock ticker (`ShopSearch#near`'s once-per-ticker keeper check, VC-2): both are absent while the shared ticker has no keeper, and both appear once one is placed.
 
 ### `class ShopViewGameTest` — `src/gametest/java/villager_customers/gametest/ShopViewGameTest.java`
@@ -37,6 +40,8 @@ VC-4's four acceptance-criteria game tests: a full trip and trade while in WORK,
 - `void aVillagerInWorkWalksToAMatchingShopAndTrades(GameTestHelper helper)`
 - `void aVillagerNotInWorkAtNightDoesNotStartATripEvenWithAForcedRoll(GameTestHelper helper)`
 - `void aShopRemovedMidWalkCancelsTheTripClearsTheMemoryAndStartsCooldown(GameTestHelper helper)`
+- `void aSecondForcedRollWhileATripIsAlreadyActiveDoesNotReplaceTheTarget(GameTestHelper helper)` — VC-6 sweep gap: `CUSTOMER-REQ-008` ("at most one active trip") is implemented as an early return in CustomerHooks.onRestock but no test forced a second roll while a trip was already active — every other test has at most one shop in existence for its whole run.
+- `void anOfferExhaustedMidWalkExecutesNothingOnArrival(GameTestHelper helper)` — VC-6 sweep gap: `CUSTOMER-FAIL-002` ("the matched offer runs out of uses before arrival ...
 - `void theMixinCoexistsWithASecondIndependentlyAddedWorkBehaviour(GameTestHelper helper)` — `ARCH-FAIL-004`/`TEST-REQ-003`: Brain.addActivity is additive, so a second, independently added WORK behaviour — standing in for another mod's own mixin — must coexist with this mod's own ShoppingTripBehavior, already added by the real VillagerBrainMixin at spawn.
 
 ### `class SmokeGameTest` — `src/gametest/java/villager_customers/gametest/SmokeGameTest.java`
