@@ -1,7 +1,17 @@
 {
   "pulls": {
-    "at": 1789804568.889184,
+    "at": 1789805090.291324,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "documentation/vc-10-listing-conventions",
+        "index": "7",
+        "state": "merged",
+        "title": "docs(villager_customers): Modrinth body aligned with the live listing conventions: Create: title, category set, GitHub links (VC-10)",
+        "updated": "2026-09-19T07:56:22Z"
+      },
       {
         "author": "scheeren",
         "base": "development",
