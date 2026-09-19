@@ -24,7 +24,7 @@ First thing to verify, and the ticket's largest risk: the exact Create-internal 
 - [x] Game test with a mock villager and a small real shop network (table cloth, stock ticker, a packager with a chest of goods): a unit completes — the goods leave the chest, the payment box holds the price and the xp nuggets, the offer's uses increase by one, the villager's trade xp is granted exactly once (`TRANSACTION-REQ-004..007`).
 - [x] Game test: refusal when stock is short — the loop stops, units already completed stand, the offer keeps its remaining uses, no error (`TRANSACTION-FAIL-002`).
 - [x] Game test: refusal when the payment box is full — the loop stops ("cash register full"), earlier units stand (`TRANSACTION-FAIL-003`).
-- [ ] (open at merge, 2026-09-19 review: the executor never touches demand or reputation, but no test asserts it yet; carried into VC-4's game test) Demand (`MerchantOffer.getDemand()`/`updateDemand()`) and villager-player reputation confirmed untouched by a mod-driven unit, proven by asserting both are unchanged across a completed unit in a game test (`TRANSACTION-REQ-009`).
+- [x] (asserted in 8a97a4d, PR #4) Demand (`MerchantOffer.getDemand()`/`updateDemand()`) and villager-player reputation confirmed untouched by a mod-driven unit, proven by asserting both are unchanged across a completed unit in a game test (`TRANSACTION-REQ-009`).
 - [x] The removal-call finding (public call used, or the accessor mixin added and what it targets) is written into this ticket's Constraints section before it is marked done.
 
 ## Constraints and prior findings
