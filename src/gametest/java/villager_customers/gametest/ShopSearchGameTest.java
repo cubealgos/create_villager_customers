@@ -57,6 +57,38 @@ public final class ShopSearchGameTest {
     }
 
     /**
+     * VC-6 sweep gap: `SHOP-REQ-004`'s "no distance beyond vanilla's own added" and `SHOP-FAIL-001`
+     * ("table cloth built outside any village's reach ... invisible to search; not a bug") were only
+     * exercised by tests that stay well inside whatever radius they pass — nothing proved a shop
+     * genuinely beyond the search radius is excluded rather than merely never having been tried. A
+     * shop at distance 6 with radius 3 is outside; the same shop is inside once the radius covers it.
+     */
+    @GameTest
+    public void aShopBeyondTheSearchRadiusIsInvisibleToTheSearch(GameTestHelper helper) {
+        int smallRadius = 3;
+        BlockPos origin = new BlockPos(0, 1, 0);
+        BlockPos nearCloth = new BlockPos(1, 1, 1);
+        BlockPos farCloth = new BlockPos(1, 1, 6);
+
+        placeShop(helper, nearCloth, nearCloth.east(1), nearCloth.east(1).south());
+        placeShop(helper, farCloth, farCloth.east(1), farCloth.east(1).north());
+
+        helper.runAfterDelay(3, () -> {
+            ServerLevel level = helper.getLevel();
+            BlockPos originPos = helper.absolutePos(origin);
+            BlockPos nearPos = helper.absolutePos(nearCloth);
+
+            List<Shop> foundNarrow = ShopSearch.near(level, originPos, smallRadius);
+            helper.assertTrue(foundNarrow.size() == 1, "only the near shop is within the small radius: " + foundNarrow.size());
+            helper.assertTrue(foundNarrow.get(0).pos().equals(nearPos), "the shop found within the small radius is the near one");
+
+            List<Shop> foundWide = ShopSearch.near(level, originPos, TEST_RADIUS);
+            helper.assertTrue(foundWide.size() == 2, "both shops are within the wider radius: " + foundWide.size());
+            helper.succeed();
+        });
+    }
+
+    /**
      * Two cloths sharing one stock ticker (`ShopSearch#near`'s once-per-ticker keeper check,
      * VC-2): both are absent while the shared ticker has no keeper, and both appear once one is
      * placed.

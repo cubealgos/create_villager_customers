@@ -80,10 +80,18 @@ public final class ShoppingTripGameTest {
                 villager.getBrain().hasMemoryValue(CustomerMemoryModules.SHOPPING_TRIP_TARGET), "the forced roll set a trip target"
             );
 
-            helper.succeedWhen(() -> helper.assertTrue(
-                TransactionGameTest.paymentBoxHolds(network.ticker, Items.EMERALD, 1),
-                "the villager walked to the shop and traded: the payment box should hold one emerald"
-            ));
+            // CUSTOMER-REQ-005: arrival hands off to TRANSACTION *and* clears the trip memory; the
+            // happy path only asserted the payment box before VC-6's sweep, never the memory clear.
+            helper.succeedWhen(() -> {
+                helper.assertTrue(
+                    TransactionGameTest.paymentBoxHolds(network.ticker, Items.EMERALD, 1),
+                    "the villager walked to the shop and traded: the payment box should hold one emerald"
+                );
+                helper.assertTrue(
+                    !villager.getBrain().hasMemoryValue(CustomerMemoryModules.SHOPPING_TRIP_TARGET),
+                    "the trip memory was cleared on arrival"
+                );
+            });
         });
     }
 
@@ -177,6 +185,146 @@ public final class ShoppingTripGameTest {
                         TransactionGameTest.paymentBoxHolds(network.ticker, Items.EMERALD, 0), "no partial transaction occurred"
                     );
                 });
+            });
+        });
+    }
+
+    /**
+     * VC-6 sweep gap: `CUSTOMER-REQ-008` ("at most one active trip") is implemented as an early
+     * return in {@code CustomerHooks.onRestock} but no test forced a second roll while a trip was
+     * already active — every other test has at most one shop in existence for its whole run. A
+     * second, nearer shop appears only after the first roll already set a trip target at the
+     * farther one, so a second forced roll would prefer it if the guard were missing.
+     */
+    @GameTest
+    public void aSecondForcedRollWhileATripIsAlreadyActiveDoesNotReplaceTheTarget(GameTestHelper helper) {
+        BlockPos farClothRelative = new BlockPos(1, 1, 7);
+        BlockPos farTickerRelative = farClothRelative.east(2);
+        BlockPos farKeeperRelative = farTickerRelative.south();
+        BlockPos nearClothRelative = new BlockPos(1, 1, 2);
+        BlockPos nearTickerRelative = nearClothRelative.east(2);
+        BlockPos nearKeeperRelative = nearTickerRelative.south();
+
+        helper.setBlock(farClothRelative, AllBlocks.ANDESITE_TABLE_CLOTH);
+        helper.setBlock(farTickerRelative, AllBlocks.STOCK_TICKER);
+        helper.setBlock(
+            farKeeperRelative, AllBlocks.BLAZE_BURNER.defaultBlockState().setValue(BlazeBurnerBlock.HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.SMOULDERING)
+        );
+
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
+        villager.getOffers().add(freshOffer());
+
+        helper.runAfterDelay(3, () -> {
+            configureCloth(helper, farClothRelative, farTickerRelative);
+
+            helper.setTime(2000);
+            villager.getBrain().setActiveActivityIfPossible(Activity.WORK);
+
+            CustomerHooks.setRollSourceForTesting(() -> 0.0);
+            villager.restock();
+            CustomerHooks.resetRollSourceForTesting();
+
+            helper.assertTrue(
+                villager.getBrain().hasMemoryValue(CustomerMemoryModules.SHOPPING_TRIP_TARGET), "the first forced roll set a trip target"
+            );
+            var firstTarget = villager.getBrain().getMemory(CustomerMemoryModules.SHOPPING_TRIP_TARGET).orElseThrow();
+
+            helper.setBlock(nearClothRelative, AllBlocks.ANDESITE_TABLE_CLOTH);
+            helper.setBlock(nearTickerRelative, AllBlocks.STOCK_TICKER);
+            helper.setBlock(
+                nearKeeperRelative,
+                AllBlocks.BLAZE_BURNER.defaultBlockState().setValue(BlazeBurnerBlock.HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.SMOULDERING)
+            );
+
+            helper.runAfterDelay(2, () -> {
+                configureCloth(helper, nearClothRelative, nearTickerRelative);
+
+                helper.runAfterDelay(2, () -> {
+                    CustomerHooks.setRollSourceForTesting(() -> 0.0);
+                    villager.restock();
+                    CustomerHooks.resetRollSourceForTesting();
+
+                    var secondTarget = villager.getBrain().getMemory(CustomerMemoryModules.SHOPPING_TRIP_TARGET).orElseThrow();
+                    helper.assertTrue(
+                        secondTarget.equals(firstTarget),
+                        "a second forced roll while a trip is active did not replace the target, even with a nearer shop now present"
+                    );
+                    helper.succeed();
+                });
+            });
+        });
+    }
+
+    /**
+     * VC-6 sweep gap: `CUSTOMER-FAIL-002` ("the matched offer runs out of uses before arrival ...
+     * re-checked on arrival by TRANSACTION; if no offer still matches, the trip ends with nothing
+     * executed, no error") is implemented — {@code TransactionExecutor.execute}'s own
+     * {@code OUT_OF_USES} check runs again at arrival — but no test exhausted the offer between the
+     * roll and the walk's end; every other walking test's offer still had uses left on arrival. The
+     * offer is exhausted immediately after the roll, well before the villager can cover the ~4-block
+     * walk, standing in for a player trading it away in the meantime.
+     *
+     * <p>Uses a diamond/netherite-ingot shape rather than {@link #freshOffer()}'s wheat/emerald one:
+     * {@code CustomerHooks.search} runs at the full production {@code ShopSearch.VILLAGE_REACH} (48
+     * blocks), which reaches into neighbouring game-test structures, and most of this suite's shops
+     * share the wheat-for-emerald shape — a shared shape risks the villager targeting a neighbour's
+     * shop instead of this test's own nearby one and never arriving within {@code maxTicks} (found by
+     * this ticket's own `just check` run against {@code DebugCommandGameTest}'s sibling gap, not by
+     * inspection).
+     */
+    @GameTest(maxTicks = 300)
+    public void anOfferExhaustedMidWalkExecutesNothingOnArrival(GameTestHelper helper) {
+        TestShopNetwork network = TestShopNetwork.build(helper, 20);
+        BlockPos tickerRelative = new BlockPos(1, 1, 5); // TestShopNetwork.build's own ticker position
+        BlockPos keeperRelative = tickerRelative.east(1);
+        BlockPos clothRelative = new BlockPos(1, 1, 7);
+
+        helper.setBlock(clothRelative, AllBlocks.ANDESITE_TABLE_CLOTH);
+        helper.setBlock(
+            keeperRelative, AllBlocks.BLAZE_BURNER.defaultBlockState().setValue(BlazeBurnerBlock.HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.SMOULDERING)
+        );
+
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 3)); // 4 blocks from the cloth
+        MerchantOffer offer = new MerchantOffer(new ItemCost(Items.DIAMOND, 5), new ItemStack(Items.NETHERITE_INGOT, 1), 2, 10, 0.0f);
+        villager.getOffers().add(offer);
+
+        helper.runAfterDelay(3, () -> {
+            BlockPos clothPos = helper.absolutePos(clothRelative);
+            BlockPos tickerPos = helper.absolutePos(tickerRelative);
+            TableClothBlockEntity cloth = helper.getBlockEntity(clothRelative, TableClothBlockEntity.class);
+            cloth.priceTag.setFilter(new ItemStack(Items.NETHERITE_INGOT));
+            cloth.priceTag.count = 1;
+            cloth.requestData = new AutoRequestData(
+                PackageOrderWithCrafts.simple(List.of(new BigItemStack(new ItemStack(Items.DIAMOND), 5))), "", tickerPos.subtract(clothPos), "", true
+            );
+
+            helper.setTime(2000);
+            villager.getBrain().setActiveActivityIfPossible(Activity.WORK);
+
+            CustomerHooks.setRollSourceForTesting(() -> 0.0);
+            villager.restock();
+            CustomerHooks.resetRollSourceForTesting();
+
+            helper.assertTrue(
+                villager.getBrain().hasMemoryValue(CustomerMemoryModules.SHOPPING_TRIP_TARGET), "the forced roll set a trip target"
+            );
+
+            // Exhaust the offer's uses right after the roll, well before the walk completes.
+            while (offer.getUses() < offer.getMaxUses()) {
+                offer.increaseUses();
+            }
+            int usesAfterExhausting = offer.getUses();
+
+            helper.succeedWhen(() -> {
+                helper.assertTrue(
+                    !villager.getBrain().hasMemoryValue(CustomerMemoryModules.SHOPPING_TRIP_TARGET),
+                    "the villager arrived and the trip memory was cleared even with nothing left to trade"
+                );
+                helper.assertTrue(
+                    TransactionGameTest.paymentBoxHolds(network.ticker, Items.EMERALD, 0),
+                    "no unit executed: the offer had no uses left by the time the villager arrived"
+                );
+                helper.assertTrue(offer.getUses() == usesAfterExhausting, "the offer's uses were not touched again: " + offer.getUses());
             });
         });
     }
