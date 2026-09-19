@@ -16,8 +16,9 @@ signature page before calling into a package you did not write.
 | `villager_customers` | root | VillagerCustomers |  |
 | `villager_customers.client` | root | VillagerCustomersClient |  |
 | `villager_customers.model` | root |  | The pure part: the match rule, the xp-nugget conversion and the chance roll, with no Minecraft imports (docs/spec/operations/testing.md). |
+| `villager_customers.shop` | root | Shop, ShopPoi, ShopRegistration, ShopSearch |  |
 | `villager_customers` | root (test) | SourceSurfaceTest |  |
-| `villager_customers.gametest` | root (gametest) | SmokeGameTest |  |
+| `villager_customers.gametest` | root (gametest) | ShopPoiGameTest, ShopSearchGameTest, ShopViewGameTest, SmokeGameTest |  |
 
 | build script | what |
 |---|---|

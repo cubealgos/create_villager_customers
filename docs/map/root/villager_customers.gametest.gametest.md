@@ -5,6 +5,18 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class ShopPoiGameTest` — `src/gametest/java/villager_customers/gametest/ShopPoiGameTest.java`
+A table cloth's own block-entity load/unload keeps the village point-of-interest index in step with villager_customers:table_cloth_shop (VC-2, `SHOP-REQ-001`).
+- `void tableClothAppearsAndDisappearsAsPoi(GameTestHelper helper)`
+
+### `class ShopSearchGameTest` — `src/gametest/java/villager_customers/gametest/ShopSearchGameTest.java`
+Two shops, one nearer: ShopSearch#near returns the nearer one first (VC-2, `SHOP-DEC-001`).
+- `void nearestShopComesFirst(GameTestHelper helper)`
+
+### `class ShopViewGameTest` — `src/gametest/java/villager_customers/gametest/ShopViewGameTest.java`
+A minimal real shop — a table cloth with a price and an encoded request, linked to a stock ticker with a keeper present — read through Shop#at (VC-2, `SHOP-REQ-002`, `SHOP-REQ-003`).
+- `void aWellFormedShopIsFoundAndLosesCandidacyCorrectly(GameTestHelper helper)`
+
 ### `class SmokeGameTest` — `src/gametest/java/villager_customers/gametest/SmokeGameTest.java`
 M0: the mod loads beside Create Fly; everything else follows.
 - `void theModLoadsBesideCreateFly(GameTestHelper helper)`
