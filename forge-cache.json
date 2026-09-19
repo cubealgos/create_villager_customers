@@ -1,6 +1,17 @@
 {
   "pulls": {
-    "at": 1789800958.9233458,
-    "payload": []
+    "at": 1789801442.956199,
+    "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "chore/vc-1-bootstrap",
+        "index": "1",
+        "state": "merged",
+        "title": "chore(villager_customers): bootstrap: Gradle with Loom and Create Fly, entrypoints, empty mixin config, licence, notice, routing, tools, spec copy, smoke game test (VC-1)",
+        "updated": "2026-09-19T06:56:03Z"
+      }
+    ]
   }
 }
