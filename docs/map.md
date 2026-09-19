@@ -27,6 +27,7 @@ signature page before calling into a package you did not write.
 | tool | what | entry points |
 |---|---|---|
 | `tools/doctor.py` | Toolchain floors and the spec copy, per docs/spec/contracts/platform-matrix.md. | `run()`, `parse_version(text)`, `check_java()`, `check_wrapper()`, `check_tool(name, floor_key)`, `main_checkout()`, `check_spec_copy()`, `check_map()`, `main()` |
+| `tools/icon.py` | Render docs/modrinth/icon.png: a villager on the round blueprint badge Create's add-ons share. | `badge()`, `subject(img)`, `main()` |
 | `tools/map.py` | Generate the repository map from the source: docs/map.md locates every package, docs/map/.md lists every type's summary and non-private signatures. | `scan_java(src)`, `summary_of(javadoc)`, `squeeze(text)`, `strip_annotations(head)`, `parse_java(path)`, `parse_member(head, type_name, doc)`, `package_summary(package_info)`, `parse_kotlin(path)`, `parse_python(path)`, `project_of(rel)`, `walk(root)`, `collect(root)`, `page_of(pkg)`, `render_locator(tree)`, `render_package(pkg)`, `render_all(root)`, `write(root, files)`, `check(root, files)`, `main(argv)` |
 | `tools/release_notes.py` | Print the release notes for a version: its CHANGELOG.md section plus the jar's SHA-256 (REL-REQ-002). | `section(changelog, version)`, `main()` |
 | `tools/test_map.py` | The map generator, exercised as the command a person runs (rule 6 of the standard): a fixture tree in a temporary directory, `python3 tools/map.py` to write, `--check` to pass, an edit to the source, `--check` to fail. | `run(root)` |
