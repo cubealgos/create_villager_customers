@@ -1,7 +1,17 @@
 {
   "pulls": {
-    "at": 1789803192.8687072,
+    "at": 1789803340.710975,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "feature/vc-2-shops-poi",
+        "index": "5",
+        "state": "merged",
+        "title": "feat(villager_customers): shops as points of interest: the shop view, the search, nearest first (VC-2)",
+        "updated": "2026-09-19T07:33:37Z"
+      },
       {
         "author": "scheeren",
         "base": "development",
