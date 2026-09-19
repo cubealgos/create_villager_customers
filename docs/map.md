@@ -16,12 +16,13 @@ signature page before calling into a package you did not write.
 | `villager_customers` | root | VillagerCustomers |  |
 | `villager_customers.client` | root | VillagerCustomersClient |  |
 | `villager_customers.customer` | root | CustomerHooks, CustomerMemoryModules, CustomerRegistration, ShoppingTripBehavior |  |
+| `villager_customers.debug` | root | DebugCommand |  |
 | `villager_customers.mixin` | root | VillagerBrainMixin |  |
 | `villager_customers.model` | root | CustomerRules, MatchRule, NuggetConversion, StackShape | The pure part: the match rule, the xp-nugget conversion and the chance roll, with no Minecraft imports (docs/spec/operations/testing.md). |
 | `villager_customers.shop` | root | Shop, ShopPoi, ShopRegistration, ShopSearch |  |
 | `villager_customers.transaction` | root | ShopAccess, TransactionExecutor | The transaction: matching an offer against a shop and executing it (`docs/spec/domains/transaction.md`, `docs/spec/04-architecture.md` `ARCH-DEC-004`). |
 | `villager_customers` | root (test) | SourceSurfaceTest |  |
-| `villager_customers.gametest` | root (gametest) | RefusalGameTest, ShopPoiGameTest, ShopSearchGameTest, ShopViewGameTest, ShoppingTripGameTest, SmokeGameTest, TestShop, TestShopNetwork, TransactionGameTest |  |
+| `villager_customers.gametest` | root (gametest) | DebugCommandGameTest, RefusalGameTest, ShopPoiGameTest, ShopSearchGameTest, ShopViewGameTest, ShoppingTripGameTest, SmokeGameTest, TestShop, TestShopNetwork, TransactionGameTest |  |
 | `villager_customers.model` | root (test) | CustomerRulesTest, MatchRuleTest, NuggetConversionTest |  |
 
 | build script | what |
