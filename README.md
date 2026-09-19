@@ -1,4 +1,4 @@
-# Create Fly: Villager Customers
+# Create: Villager Customers
 
 During their working hours, a villager with an offer that still has uses left may, with a random
 chance rolled per restock, walk to a nearby table-cloth shop that mirrors that offer and execute
