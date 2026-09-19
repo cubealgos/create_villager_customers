@@ -7,7 +7,9 @@
   "environment": "server",
   "entrypoints": {
     "fabric-gametest": [
-      "villager_customers.gametest.SmokeGameTest"
+      "villager_customers.gametest.SmokeGameTest",
+      "villager_customers.gametest.TransactionGameTest",
+      "villager_customers.gametest.RefusalGameTest"
     ]
   },
   "depends": {

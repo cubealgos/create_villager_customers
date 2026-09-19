@@ -5,7 +5,28 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class RefusalGameTest` — `src/gametest/java/villager_customers/gametest/RefusalGameTest.java`
+VC-3: the three ways a unit is refused before anything moves — insufficient network stock, a full payment box, and an offer that never matches at all (`docs/spec/domains/transaction.md` `TRANSACTION-FAIL-001`, `TRANSACTION-FAIL-002`, `TRANSACTION-FAIL-003`).
+- `void stockTooLowRefusesTheUnitAndMovesNothing(GameTestHelper helper)`
+- `void aFullPaymentBoxRefusesTheUnitAndMovesNothing(GameTestHelper helper)`
+- `void anOfferWithASecondCostNeverMatchesAndMovesNothing(GameTestHelper helper)`
+
 ### `class SmokeGameTest` — `src/gametest/java/villager_customers/gametest/SmokeGameTest.java`
 M0: the mod loads beside Create Fly; everything else follows.
 - `void theModLoadsBesideCreateFly(GameTestHelper helper)`
+
+### `record TestShop(List<ItemStack> goods, ItemStack price, StockTickerBlockEntity ticker, BlockPos pos)` — `src/gametest/java/villager_customers/gametest/TestShop.java`
+A minimal ShopAccess built directly in the game test, standing in for VC-2's own villager_customers.shop.Shop (see ShopAccess's own Javadoc).
+
+### `class TestShopNetwork` — `src/gametest/java/villager_customers/gametest/TestShopNetwork.java`
+A small, real Create Fly logistics network for the transaction game tests: a chest, a packager targeting it, a stock link bound to the packager, and a stock ticker on the same frequency (`docs/spec/domains/transaction.md`).
+- `TestShopNetwork build(GameTestHelper helper, int wheatCount)` — Builds the network with wheatCount wheat already in the chest (0 for an empty chest).
+- `void setWheat(int wheatCount)` — Replaces the chest's single wheat stack (0 empties it).
+- `void fillPaymentBoxWithJunk()` — Fills every slot of the payment box with an unrelated full stack, leaving it no room at all.
+
+### `class TransactionGameTest` — `src/gametest/java/villager_customers/gametest/TransactionGameTest.java`
+VC-3: a matched offer executed against a real chest-and-packager network draws the goods, pays the price and xp nuggets, and advances the offer's uses and the villager's trade xp — one unit per visit while stock and uses allow (`docs/spec/domains/transaction.md` `TRANSACTION-REQ-004` through `TRANSACTION-REQ-007`).
+- `void aMatchedOfferDrawsPaysAndAdvancesUsesOneVisitAtATime(GameTestHelper helper)`
+- `int chestWheatCount(TestShopNetwork network)`
+- `boolean paymentBoxHolds(TestShopNetwork network, Item item, int count)`
 
