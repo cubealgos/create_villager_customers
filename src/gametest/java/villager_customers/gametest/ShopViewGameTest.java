@@ -10,9 +10,15 @@ import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.trading.ItemCost;
+import net.minecraft.world.item.trading.MerchantOffer;
 import villager_customers.shop.Shop;
+import villager_customers.transaction.ShopAccess;
+import villager_customers.transaction.TransactionExecutor;
 
 import java.util.List;
 import java.util.Optional;
@@ -86,6 +92,50 @@ public final class ShopViewGameTest {
                 helper.assertTrue(Shop.at(level, clothPos).isEmpty(), "removing the linked stock ticker makes the table cloth not a shop");
                 helper.succeed();
             });
+        });
+    }
+
+    /**
+     * {@link Shop#at} returned as a {@link ShopAccess} for {@code VC-3}'s
+     * {@code TransactionExecutor}, executed against a real chest-and-packager network
+     * ({@link TestShopNetwork}, reused from VC-3's own game tests): a matched offer draws the
+     * table cloth's requested wheat and completes one unit, proving {@code Shop} is a drop-in
+     * {@code ShopAccess} rather than merely typing as one.
+     */
+    @GameTest(maxTicks = 200)
+    public void aRealShopExecutesATransactionAsShopAccess(GameTestHelper helper) {
+        TestShopNetwork network = TestShopNetwork.build(helper, 20); // enough stock for exactly one unit
+        BlockPos tickerRelative = new BlockPos(1, 1, 5); // TestShopNetwork.build's own ticker position
+        BlockPos clothRelative = new BlockPos(1, 1, 7);
+        BlockPos keeperRelative = tickerRelative.east(1);
+
+        helper.setBlock(clothRelative, AllBlocks.ANDESITE_TABLE_CLOTH);
+        helper.setBlock(keeperRelative, AllBlocks.BLAZE_BURNER.defaultBlockState().setValue(BlazeBurnerBlock.HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.SMOULDERING));
+
+        ServerLevel level = helper.getLevel();
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
+        MerchantOffer offer = new MerchantOffer(new ItemCost(Items.WHEAT, 20), new ItemStack(Items.EMERALD, 1), 2, 10, 0.0f);
+
+        helper.runAfterDelay(2, () -> {
+            BlockPos clothPos = helper.absolutePos(clothRelative);
+            TableClothBlockEntity cloth = helper.getBlockEntity(clothRelative, TableClothBlockEntity.class);
+            cloth.priceTag.setFilter(new ItemStack(Items.EMERALD));
+            cloth.priceTag.count = 1;
+            cloth.requestData = new AutoRequestData(
+                PackageOrderWithCrafts.simple(List.of(new BigItemStack(new ItemStack(Items.WHEAT), 20))),
+                "",
+                network.ticker.getBlockPos().subtract(clothPos),
+                "",
+                true
+            );
+
+            ShopAccess shop = Shop.at(level, clothPos).orElseThrow();
+            TransactionExecutor.Result result = TransactionExecutor.execute(level, villager, offer, shop);
+            helper.assertTrue(
+                result.unitsCompleted() == 1,
+                "one unit completed against a real network through Shop as ShopAccess: " + result
+            );
+            helper.succeed();
         });
     }
 }

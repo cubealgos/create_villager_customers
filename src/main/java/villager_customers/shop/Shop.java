@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import villager_customers.transaction.ShopAccess;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,9 +18,10 @@ import java.util.stream.Collectors;
  * (`docs/spec/domains/shop.md` `SHOP-REQ-002`, `SHOP-REQ-003`). Never a stored or cached object:
  * {@link #at} recomputes shophood from the world on every call, and nothing here survives past the
  * call that produced it (`SHOP-DEC-002`), since a shop's candidacy can end at any time
- * (`UC-007`).
+ * (`UC-007`). Implements {@link ShopAccess}, the minimal view `VC-3`'s
+ * {@code villager_customers.transaction.TransactionExecutor} reads a shop through.
  */
-public final class Shop {
+public final class Shop implements ShopAccess {
     private final BlockPos pos;
     private final TableClothBlockEntity cloth;
     private final StockTickerBlockEntity ticker;
@@ -53,6 +55,7 @@ public final class Shop {
     }
 
     /** The goods this shop's table cloth requests, one stack per requested item. */
+    @Override
     public List<ItemStack> goods() {
         return cloth.requestData.encodedRequest().stacks().stream()
             .map(Shop::asStack)
@@ -60,16 +63,19 @@ public final class Shop {
     }
 
     /** The price this shop's table cloth asks for one unit of its goods. */
+    @Override
     public ItemStack price() {
         return cloth.getPaymentItem().copyWithCount(cloth.getPaymentAmount());
     }
 
     /** The stock ticker backing this shop's network stock and payment box. */
+    @Override
     public StockTickerBlockEntity ticker() {
         return ticker;
     }
 
     /** This shop's table cloth position. */
+    @Override
     public BlockPos pos() {
         return pos;
     }
