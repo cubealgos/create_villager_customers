@@ -18,14 +18,16 @@ Copy the verified toolchain and repository shape from `create_metered_motor`'s `
 
 ## Acceptance criteria
 
-- [ ] `just check` is green, including a smoke game test (`SmokeGameTest`) proving the mod loads on a dedicated server with Create Fly present.
-- [ ] `just doctor` is clean: toolchain floors met (Java 25, Gradle 9.5.1, Loom 1.17, Fabric Loader ≥ 0.19.5, Fabric API ≥ 0.160.0), `docs/spec/` identical to the vault, merge templates present on the default branch.
-- [ ] `fabric.mod.json`'s `contact` block links the Forgejo repo, the GitHub issues tracker, and the Modrinth slug `villager-customers`.
-- [ ] `verifyPurePackage` runs against `villager_customers.model` and passes; a deliberate import proves the check fails once (`TEST-REQ-002`, satisfied here and restated by `VC-6`).
-- [ ] `SourceSurfaceTest.noNetworkingTypeIsReferencedByTheMod` passes (`COMP-REQ-001`).
-- [ ] `villager_customers.mixins.json` exists with a `minecraft` refmap and an empty `mixins` array; the build succeeds with no mixin yet applied.
+- [x] `just check` is green, including a smoke game test (`SmokeGameTest`) proving the mod loads on a dedicated server with Create Fly present.
+- [x] `just doctor` is clean: toolchain floors met (Java 25, Gradle 9.5.1, Loom 1.17, Fabric Loader ≥ 0.19.5, Fabric API ≥ 0.160.0), `docs/spec/` identical to the vault, merge templates present on the default branch.
+- [x] `fabric.mod.json`'s `contact` block links the Forgejo repo, the GitHub issues tracker, and the Modrinth slug `villager-customers`.
+- [x] `verifyPurePackage` runs against `villager_customers.model` and passes; a deliberate import proves the check fails once (`TEST-REQ-002`, satisfied here and restated by `VC-6`).
+- [x] `SourceSurfaceTest.noNetworkingTypeIsReferencedByTheMod` passes (`COMP-REQ-001`).
+- [x] `villager_customers.mixins.json` exists with a `minecraft` refmap and an empty `mixins` array; the build succeeds with no mixin yet applied.
 
 ## Constraints and prior findings
+
+Review 2026-09-19: reviewer's own `just check` green (smoke game test with Create Fly loaded), `just doctor` clean on development after the merge, the pure-package break proof done. The `just client` boot is Kevin's check at the first behaviour ticket, as with the siblings.
 
 `docs/spec/contracts/platform-matrix.md` (`PLATFORM-REQ-001`, `PLATFORM-REQ-002`), `docs/spec/decisions/DEC-004-toolchain.md`, `docs/spec/decisions/DEC-003-licence.md`, `docs/spec/operations/compliance.md` (`COMP-REQ-001`). Create Fly coordinate, mod id `create`, declared version `6.0.9-1`, CC0, and the 26.2 toolchain floors (Java 25, Gradle 9.5.1, Loom 1.17, Loader 0.19.5, Fabric API 0.160.0) are verified against the vault (spec `README.md` §5 platform matrix). Unlike either Create Fly sibling, this mod's mixin config ultimately targets two upstreams — `minecraft` (`Villager`, for the brain hook) and possibly `create` (`TableClothBlockEntity`, `StockTickerBlockEntity`, only if `VC-3` finds no public removal call) — `ARCH-DEC-001`; this ticket only stands up the `minecraft` refmap, since nothing is mixed in yet.
 
