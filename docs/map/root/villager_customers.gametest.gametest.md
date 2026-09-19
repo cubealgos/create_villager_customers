@@ -12,6 +12,20 @@ VC-3: the three ways a unit is refused before anything moves — insufficient ne
 - `void anOfferWithASecondCostNeverMatchesAndMovesNothing(GameTestHelper helper)`
 - `void aShortDrawReturnsEveryStackToItsOwnChestAndMovesNothing(GameTestHelper helper)` — VC-3 review finding: a short draw (the stock summary said enough was available, but the real network delivered less) must return every already-extracted stack to the exact container it came from, not lose it.
 
+### `class ShopPoiGameTest` — `src/gametest/java/villager_customers/gametest/ShopPoiGameTest.java`
+Vanilla's own point-of-interest discovery — the block place/break hook and the chunk-load consistency scan, both reached through PoiTypes.forState — keeps the village point-of-interest index in step with villager_customers:table_cloth_shop with no sync of this mod's own, since ShopPoi registers through Fabric's PoiHelper (VC-2, `SHOP-REQ-001`).
+- `void tableClothAppearsAndDisappearsAsPoi(GameTestHelper helper)`
+
+### `class ShopSearchGameTest` — `src/gametest/java/villager_customers/gametest/ShopSearchGameTest.java`
+Two shops, one nearer: ShopSearch#near returns the nearer one first (VC-2, `SHOP-DEC-001`).
+- `void nearestShopComesFirst(GameTestHelper helper)`
+- `void bothClothsOnAKeeperlessSharedTickerWaitTogether(GameTestHelper helper)` — Two cloths sharing one stock ticker (`ShopSearch#near`'s once-per-ticker keeper check, VC-2): both are absent while the shared ticker has no keeper, and both appear once one is placed.
+
+### `class ShopViewGameTest` — `src/gametest/java/villager_customers/gametest/ShopViewGameTest.java`
+A minimal real shop — a table cloth with a price and an encoded request, linked to a stock ticker with a keeper present — read through Shop#at (VC-2, `SHOP-REQ-002`, `SHOP-REQ-003`).
+- `void aWellFormedShopIsFoundAndLosesCandidacyCorrectly(GameTestHelper helper)`
+- `void aRealShopExecutesATransactionAsShopAccess(GameTestHelper helper)` — Shop#at returned as a ShopAccess for VC-3's TransactionExecutor, executed against a real chest-and-packager network (TestShopNetwork, reused from VC-3's own game tests): a matched offer draws the table cloth's requested wheat and completes one unit, proving Shop is a drop-in ShopAccess rather than merely typing as one.
+
 ### `class SmokeGameTest` — `src/gametest/java/villager_customers/gametest/SmokeGameTest.java`
 M0: the mod loads beside Create Fly; everything else follows.
 - `void theModLoadsBesideCreateFly(GameTestHelper helper)`
