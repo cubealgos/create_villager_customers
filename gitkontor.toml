@@ -1,0 +1,45 @@
+# Written by `kontor init`. Every vocabulary this project uses is declared
+# here; the tool carries no built-in list, so a name changed here changes everywhere.
+
+[project]
+id = "01M2W6A2KP2PPBQF41M5RN396B"
+slug = "create_villager_customers"
+name = "Create Fly: Villager Customers"
+description = ""
+
+[item_types]
+feat = "Feature"
+bug = "Bug"
+chore = "Chore"
+docs = "Documentation"
+epic = "Epic"
+test = "Test"
+
+# `backlog` and `todo` are deliberately distinct: `backlog` means the planning is not finished, and
+# `todo` means it is. Collapsing them makes "is this ready to start" unanswerable.
+[statuses]
+backlog = { label = "Backlog", board_column = "backlog" }
+todo = { label = "To do", board_column = "todo" }
+in_progress = { label = "In progress", board_column = "in_progress" }
+blocked = { label = "Blocked", board_column = "blocked" }
+review = { label = "Review", board_column = "review" }
+done = { label = "Done", board_column = "done", terminal = true }
+cancelled = { label = "Cancelled", board_column = "done", terminal = true }
+
+[priorities]
+critical = "Critical"
+high = "High"
+medium = "Medium"
+low = "Low"
+
+[relation_types]
+blocks = { inverse = "blocked_by", acyclic = true }
+blocked_by = { inverse = "blocks", acyclic = true }
+child_of = { inverse = "parent_of", acyclic = true }
+parent_of = { inverse = "child_of", acyclic = true }
+related = { inverse = "related", symmetric = true }
+
+[[boards]]
+id = "01M2W6A2KP2PPBQF41M5RN396B"
+name = "Delivery"
+columns = ["backlog", "todo", "in_progress", "blocked", "review", "done"]

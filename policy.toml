@@ -1,0 +1,52 @@
+# Written by `kontor init`.
+#
+# ORDER MATTERS. Ruleset resolution is first-match-wins, so `gitkontor/data` is declared BEFORE the
+# `*` catch-all. Reversing them makes the data branch fall through to the code rules and every card
+# move gets rejected for missing a work-item reference it does not need.
+
+[policy]
+version = 1
+
+[[ruleset]]
+name = "data-branch"
+match = ["gitkontor/data"]
+
+[ruleset.conventional_commits]
+enabled = true
+# A card move or a wiki edit *is* the item change, so no reference is required here.
+require_ticket_ref = false
+enforce_allowed_scopes = false
+
+[ruleset.protected_branches]
+enabled = false
+
+[ruleset.branch_naming]
+enabled = false
+
+[[ruleset]]
+name = "code-branches"
+match = ["*"]
+
+[ruleset.protected_branches]
+enabled = true
+branches = ["production", "development"]
+direct_push = false
+# Enforced at commit time, where it can be checked precisely. Not at push time by default: landing
+# a merge without a forge means pushing the base branch yourself.
+enforce_push = false
+
+# The six families, exactly.
+[ruleset.branch_naming]
+enabled = true
+patterns = [
+  "feature/*", "bugfix/*", "release/*", "hotfix/*", "chore/*", "documentation/*",
+]
+
+[ruleset.conventional_commits]
+enabled = true
+# Scope is REQUIRED, and there is no merge or release exemption — every commit conforms.
+allowed_scopes = ["create_villager_customers"]
+require_ticket_ref = true
+# Opt in once the scope list is genuinely curated; until then an uncurated list would reject
+# every commit whose scope is simply not listed yet.
+enforce_allowed_scopes = false
