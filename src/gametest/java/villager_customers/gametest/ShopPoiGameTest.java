@@ -8,8 +8,12 @@ import net.minecraft.server.level.ServerLevel;
 import villager_customers.shop.ShopPoi;
 
 /**
- * A table cloth's own block-entity load/unload keeps the village point-of-interest index in step
- * with {@code villager_customers:table_cloth_shop} (VC-2, `SHOP-REQ-001`).
+ * Vanilla's own point-of-interest discovery — the block place/break hook and the chunk-load
+ * consistency scan, both reached through {@code PoiTypes.forState} — keeps the village
+ * point-of-interest index in step with {@code villager_customers:table_cloth_shop} with no sync of
+ * this mod's own, since {@link ShopPoi} registers through Fabric's {@code PoiHelper} (VC-2,
+ * `SHOP-REQ-001`). Drives only {@code helper.setBlock}/{@code destroyBlock} — no block-entity
+ * poking — to prove that pipeline, not a manual one.
  */
 public final class ShopPoiGameTest {
     @GameTest

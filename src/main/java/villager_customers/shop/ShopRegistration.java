@@ -8,7 +8,7 @@ public final class ShopRegistration {
     private ShopRegistration() {
     }
 
-    /** Registers the shop point-of-interest type and its world sync. */
+    /** Registers the shop point-of-interest type. */
     public static void register() {
         ShopPoi.register();
     }

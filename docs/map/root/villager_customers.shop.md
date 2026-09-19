@@ -17,11 +17,11 @@ A live view onto a Create Fly table cloth that currently counts as a shop (`docs
 The point-of-interest type villager_customers:table_cloth_shop, registered over every Create Fly table cloth block state so a villager's search can find a shop the same way it finds a job site (`docs/spec/domains/shop.md` `SHOP-REQ-001`; `docs/spec/decisions/DEC-008-poi.md`).
 - `Identifier ID` — The point-of-interest type's registry id.
 - `ResourceKey<PoiType> KEY` — The point-of-interest type's registry key.
-- `void register()` — Registers the point-of-interest type and the load/unload sync described above.
+- `void register()` — Registers the point-of-interest type.
 
 ### `class ShopRegistration` — `src/main/java/villager_customers/shop/ShopRegistration.java`
 This package's single entry point into VillagerCustomers.onInitialize (`docs/spec/decisions/DEC-008-poi.md`).
-- `void register()` — Registers the shop point-of-interest type and its world sync.
+- `void register()` — Registers the shop point-of-interest type.
 
 ### `class ShopSearch` — `src/main/java/villager_customers/shop/ShopSearch.java`
 Searches the village point-of-interest index for shop candidates, nearest first (`docs/spec/domains/shop.md` `SHOP-REQ-004`, `SHOP-REQ-006`; `SHOP-DEC-001`).

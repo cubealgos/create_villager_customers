@@ -2,17 +2,11 @@ package villager_customers.shop;
 
 import com.zurrtum.create.AllBlocks;
 import com.zurrtum.create.content.logistics.tableCloth.TableClothBlock;
-import com.zurrtum.create.content.logistics.tableCloth.TableClothBlockEntity;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
-import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.fabricmc.fabric.api.object.builder.v1.world.poi.PoiHelper;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.LinkedHashSet;
@@ -24,26 +18,22 @@ import java.util.stream.Collectors;
  * Create Fly table cloth block state so a villager's search can find a shop the same way it finds
  * a job site (`docs/spec/domains/shop.md` `SHOP-REQ-001`; `docs/spec/decisions/DEC-008-poi.md`).
  *
- * <p><b>Registration API, verified by {@code javap} against
- * {@code minecraft-merged-deobf-26.2.jar}:</b> no Fabric API module in 0.160.0+26.2 carries a
- * point-of-interest helper (an exhaustive jar listing across every module under
- * {@code net.fabricmc.fabric-api} found no class with "poi" or "point_of_interest" in its name),
- * and {@code net/minecraft/world/entity/ai/village/poi/point_of_interest_type/} does not exist as
- * a data folder anywhere in the merged jar — {@link PoiType} is a plain code-registered type, not
- * data-driven. Registration is therefore the same raw vanilla pattern
- * {@code net.minecraft.world.entity.ai.village.poi.PoiTypes.bootstrap} uses for job sites:
- * {@link Registry#registerForHolder(Registry, ResourceKey, Object)} against
- * {@link BuiltInRegistries#POINT_OF_INTEREST_TYPE}.
- *
- * <p><b>A second finding this registration alone does not cover:</b> {@code PoiManager}'s two
- * paths that would normally keep a POI in step with the world —
- * {@code ServerLevel.updatePOIOnBlockStateChange} (block place/break) and the chunk-load
- * consistency scan reached from {@code SerializableChunkData} — both call
- * {@code PoiTypes.forState(BlockState)} directly (confirmed by {@code javap -p -c} disassembly of
- * both), which is {@code PoiTypes}' own private, vanilla-only block-state map and cannot see a
- * registry entry a mod adds. So this mod keeps its own POI records in step with the world itself,
- * on the table cloth block entity's own load and unload, exactly mirroring what that vanilla hook
- * would have done for a state it recognised.
+ * <p><b>Registration API, verified by {@code javap} against the Fabric API 0.160.0+26.2 module
+ * jars:</b> {@code fabric-object-builder-api-v1} (24.1.1) ships
+ * {@link PoiHelper#register(Identifier, int, int, Iterable)}. Disassembling it shows it forwards
+ * to vanilla's own (access-widened) {@code PoiTypes.register(Registry, ResourceKey, Set, int,
+ * int)} — the exact private method {@code PoiTypes.bootstrap} itself uses for job sites, which
+ * also runs {@code PoiTypes}' own {@code registerBlockStates}, populating its private
+ * {@code TYPE_BY_STATE} map. Because registration goes through that same vanilla method, vanilla's
+ * own discovery paths — {@code ServerLevel.updatePOIOnBlockStateChange} (block place/break) and
+ * the chunk-load consistency scan — recognise a table cloth exactly the way they recognise a bed
+ * or a lectern, through {@code PoiTypes.forState}, with no sync of this mod's own needed. (An
+ * earlier version of this class registered straight into
+ * {@code BuiltInRegistries.POINT_OF_INTEREST_TYPE} and synced presence itself on the table cloth
+ * block entity's load/unload, since that bypassed {@code TYPE_BY_STATE} entirely; that path was
+ * fragile — the chunk-load consistency scan clears any record for a state {@code forState} does
+ * not know, so the record only survived because the block-entity load event happened to fire
+ * after that scan — and is no longer needed now that {@link PoiHelper} is used.)
  */
 public final class ShopPoi {
     /** The point-of-interest type's registry id. */
@@ -60,28 +50,12 @@ public final class ShopPoi {
     private static final int MAX_TICKETS = 1;
     private static final int VALID_RANGE = 1;
 
-    private static Holder<PoiType> holder;
-
     private ShopPoi() {
     }
 
-    /** Registers the point-of-interest type and the load/unload sync described above. Call once. */
+    /** Registers the point-of-interest type. Call once. */
     static void register() {
-        holder = Registry.registerForHolder(BuiltInRegistries.POINT_OF_INTEREST_TYPE, KEY, new PoiType(tableClothStates(), MAX_TICKETS, VALID_RANGE));
-        ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register(ShopPoi::onLoad);
-        ServerBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register(ShopPoi::onUnload);
-    }
-
-    private static void onLoad(BlockEntity blockEntity, ServerLevel level) {
-        if (blockEntity instanceof TableClothBlockEntity) {
-            level.getPoiManager().add(blockEntity.getBlockPos(), holder);
-        }
-    }
-
-    private static void onUnload(BlockEntity blockEntity, ServerLevel level) {
-        if (blockEntity instanceof TableClothBlockEntity) {
-            level.getPoiManager().remove(blockEntity.getBlockPos());
-        }
+        PoiHelper.register(ID, MAX_TICKETS, VALID_RANGE, tableClothStates());
     }
 
     /**

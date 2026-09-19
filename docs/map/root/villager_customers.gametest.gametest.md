@@ -6,12 +6,13 @@ Every type with its summary and every non-private constructor, method and consta
 signature is the contract; read the source only when the summary is not enough.
 
 ### `class ShopPoiGameTest` — `src/gametest/java/villager_customers/gametest/ShopPoiGameTest.java`
-A table cloth's own block-entity load/unload keeps the village point-of-interest index in step with villager_customers:table_cloth_shop (VC-2, `SHOP-REQ-001`).
+Vanilla's own point-of-interest discovery — the block place/break hook and the chunk-load consistency scan, both reached through PoiTypes.forState — keeps the village point-of-interest index in step with villager_customers:table_cloth_shop with no sync of this mod's own, since ShopPoi registers through Fabric's PoiHelper (VC-2, `SHOP-REQ-001`).
 - `void tableClothAppearsAndDisappearsAsPoi(GameTestHelper helper)`
 
 ### `class ShopSearchGameTest` — `src/gametest/java/villager_customers/gametest/ShopSearchGameTest.java`
 Two shops, one nearer: ShopSearch#near returns the nearer one first (VC-2, `SHOP-DEC-001`).
 - `void nearestShopComesFirst(GameTestHelper helper)`
+- `void bothClothsOnAKeeperlessSharedTickerWaitTogether(GameTestHelper helper)` — Two cloths sharing one stock ticker (`ShopSearch#near`'s once-per-ticker keeper check, VC-2): both are absent while the shared ticker has no keeper, and both appear once one is placed.
 
 ### `class ShopViewGameTest` — `src/gametest/java/villager_customers/gametest/ShopViewGameTest.java`
 A minimal real shop — a table cloth with a price and an encoded request, linked to a stock ticker with a keeper present — read through Shop#at (VC-2, `SHOP-REQ-002`, `SHOP-REQ-003`).
