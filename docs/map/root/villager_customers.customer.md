@@ -6,10 +6,20 @@ Every type with its summary and every non-private constructor, method and consta
 signature is the contract; read the source only when the summary is not enough.
 
 ### `class CustomerHooks` — `src/main/java/villager_customers/customer/CustomerHooks.java`
-The restock hook villager_customers.mixin.VillagerBrainMixin calls (`docs/spec/domains/customer.md` `CUSTOMER-REQ-001`, `002`, `003`, `008`, `009`; `docs/spec/contracts/data-contract.md` `DATA-REQ-002`).
+The restock hook villager_customers.mixin.VillagerBrainMixin calls (`docs/spec/domains/customer.md` `CUSTOMER-REQ-001`, `002`, `003`, `008`, `009`; `docs/spec/contracts/data-contract.md` `DATA-REQ-002`), and the read-only search it runs, shared with villager_customers.debug.DebugCommand's search and trip subcommands (`docs/spec/operations/testing.md`'s "Development tool" row, `VC-5`).
 - `void onRestock(Villager villager)` — Called once per completed restock, from the mixin injected at Villager.restock()'s RETURN (`CUSTOMER-REQ-002`).
+- `List<MerchantOffer> eligibleOffers(Villager villager)` — Every offer of villager's that still has uses left, in trade order (`CUSTOMER-REQ-003`, `009`).
+- `Optional<MerchantOffer> matchingOffer(Villager villager, Shop shop)` — The first of villager's eligible offers (see #eligibleOffers) that matches shop, if any.
+- `Search search(ServerLevel level, Villager villager)` — The same eligible-offer, nearest-shop search #onRestock runs (`CUSTOMER-REQ-003`, `009`), exposed read-only for villager_customers.debug.DebugCommand's search and trip subcommands (`VC-5`).
+- `void forceNextRoll(UUID villagerId)` — Test/dev-only: forces the next #onRestock roll to succeed for one villager, consumed once (`VC-5`).
+- `boolean hasForcedRoll(UUID villagerId)` — Test/dev-only: whether a forced roll is still pending for a villager (`VC-5`'s game test accessor).
 - `void setRollSourceForTesting(DoubleSupplier source)` — Test-only: forces the next roll(s)' source.
 - `void resetRollSourceForTesting()` — Test-only: restores the production roll source (Math#random()).
+
+    - **nested** `record Search(Optional<Shop> shop, Optional<MerchantOffer> offer, Reason reason)`
+    The outcome of #search: a matched shop and offer (reason() == MATCH, both present), or which of the two eligibility checks failed (both empty).
+
+    - **nested** `enum Reason`
 
 ### `class CustomerMemoryModules` — `src/main/java/villager_customers/customer/CustomerMemoryModules.java`
 The two memory modules a shopping trip lives in, registered and persisted exactly as vanilla's own HOME/JOB_SITE/CANT_REACH_WALK_TARGET_SINCE (`docs/spec/04-architecture.md` `ARCH-DEC-005`; `docs/spec/contracts/data-contract.md`).

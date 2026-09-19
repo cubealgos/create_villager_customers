@@ -5,6 +5,12 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class DebugCommandGameTest` — `src/gametest/java/villager_customers/gametest/DebugCommandGameTest.java`
+VC-5's three acceptance-criteria game tests for villager_customers.debug.DebugCommand, run in the game test environment, which is itself a development environment (`FabricLoader.isDevelopmentEnvironment()` is true under runGameTest, exactly as it is under runClient), so the command is registered and reachable here.
+- `void searchPrintsAMatchAgainstARealShop(GameTestHelper helper)`
+- `void rollSetsTheForcedFlag(GameTestHelper helper)`
+- `void tripEndsWithThePaymentBoxHoldingThePriceWithinTheTimeout(GameTestHelper helper)`
+
 ### `class RefusalGameTest` — `src/gametest/java/villager_customers/gametest/RefusalGameTest.java`
 VC-3: the three ways a unit is refused before anything moves — insufficient network stock, a full payment box, and an offer that never matches at all (`docs/spec/domains/transaction.md` `TRANSACTION-FAIL-001`, `TRANSACTION-FAIL-002`, `TRANSACTION-FAIL-003`).
 - `void stockTooLowRefusesTheUnitAndMovesNothing(GameTestHelper helper)`

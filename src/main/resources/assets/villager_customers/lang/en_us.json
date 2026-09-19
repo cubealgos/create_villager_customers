@@ -1,1 +1,11 @@
-{}
+{
+  "command.villager_customers.debug.not_a_villager": "That entity is not a villager.",
+  "command.villager_customers.debug.roll.done": "Forced the next restock roll to succeed for %s.",
+  "command.villager_customers.debug.search.match": "%s: shop at %s, %s blocks away, matched offer %s",
+  "command.villager_customers.debug.search.no_offer": "%s: no match -- no offer with uses left",
+  "command.villager_customers.debug.search.no_shop": "%s: no match -- no shop matches any eligible offer",
+  "command.villager_customers.debug.trip.work_forced": "%s was not in WORK; forced it active for this trip.",
+  "command.villager_customers.debug.trip.match": "%s: trip target set to shop at %s, %s blocks away, matched offer %s",
+  "command.villager_customers.debug.trip.no_offer": "%s: no match -- no offer with uses left",
+  "command.villager_customers.debug.trip.no_shop": "%s: no match -- no shop matches any eligible offer"
+}
