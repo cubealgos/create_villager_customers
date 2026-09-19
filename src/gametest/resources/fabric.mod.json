@@ -10,7 +10,9 @@
       "villager_customers.gametest.SmokeGameTest",
       "villager_customers.gametest.ShopPoiGameTest",
       "villager_customers.gametest.ShopViewGameTest",
-      "villager_customers.gametest.ShopSearchGameTest"
+      "villager_customers.gametest.ShopSearchGameTest",
+      "villager_customers.gametest.TransactionGameTest",
+      "villager_customers.gametest.RefusalGameTest"
     ]
   },
   "depends": {
