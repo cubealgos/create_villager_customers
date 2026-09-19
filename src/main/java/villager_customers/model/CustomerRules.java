@@ -1,13 +1,12 @@
-package villager_customers.customer;
+package villager_customers.model;
 
 /**
  * The pure decision rules behind a shopping trip (`docs/spec/domains/customer.md` `CUSTOMER-REQ-002`,
  * `CUSTOMER-REQ-004`, `CUSTOMER-REQ-007`; `docs/spec/decisions/DEC-009-chance-per-restock.md`). No
  * Minecraft, Fabric or Create import, so {@link #rolls(double)} is unit-testable without a game test
- * (`docs/spec/operations/testing.md`'s "chance roll given a fixed random source"), even though this
- * ticket places it in {@code villager_customers.customer} rather than the build's
- * {@code verifyPurePackage}-enforced {@code villager_customers.model} — see this ticket's own
- * Findings in its Constraints section.
+ * (`docs/spec/operations/testing.md`'s "chance roll given a fixed random source"); the test seam that
+ * forces a roll in game tests stays in {@code villager_customers.customer.CustomerHooks}, the only
+ * caller that needs the game to exist at all.
  */
 public final class CustomerRules {
     /** The chance a restock sends the villager shopping, default 50% (`DEC-009`). */

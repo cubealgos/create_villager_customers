@@ -21,14 +21,6 @@ The two memory modules a shopping trip lives in, registered and persisted exactl
 This package's single entry point into VillagerCustomers.onInitialize (`docs/spec/04-architecture.md` `ARCH-DEC-005`), mirroring villager_customers.shop.ShopRegistration.
 - `void register()` — Registers the shopping-trip memory modules.
 
-### `class CustomerRules` — `src/main/java/villager_customers/customer/CustomerRules.java`
-The pure decision rules behind a shopping trip (`docs/spec/domains/customer.md` `CUSTOMER-REQ-002`, `CUSTOMER-REQ-004`, `CUSTOMER-REQ-007`; `docs/spec/decisions/DEC-009-chance-per-restock.md`).
-- `double CHANCE_PER_RESTOCK` — The chance a restock sends the villager shopping, default 50% (`DEC-009`).
-- `int ARRIVAL_DISTANCE` — The walk's arrival distance, in blocks (`CUSTOMER-REQ-004`).
-- `int WALK_TIMEOUT_TICKS` — The walk's own give-up timeout, in ticks (`CUSTOMER-REQ-004`).
-- `int COOLDOWN_TICKS` — The cooldown started after a cancelled or timed-out trip, in ticks (`CUSTOMER-REQ-007`).
-- `boolean rolls(double random)` — Whether one roll of random — expected uniform in [0, 1), the range both Math#random() and java.util.Random#nextDouble() produce — succeeds against #CHANCE_PER_RESTOCK (`CUSTOMER-REQ-002`).
-
 ### `class ShoppingTripBehavior` — `src/main/java/villager_customers/customer/ShoppingTripBehavior.java`
 The shopping-trip state machine run in Activity.WORK (`docs/spec/domains/customer.md` §3, `CUSTOMER-REQ-001`, `004`..`009`): walks the villager to the shop remembered in CustomerMemoryModules#SHOPPING_TRIP_TARGET, hands off to TransactionExecutor on arrival, and cancels — clearing the memory and starting the cooldown — on panic, on leaving WORK, on timeout, or when the target loses its shophood before arrival.
 - `ShoppingTripBehavior()`

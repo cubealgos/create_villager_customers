@@ -9,6 +9,7 @@ import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.trading.MerchantOffer;
+import villager_customers.model.CustomerRules;
 import villager_customers.shop.Shop;
 import villager_customers.transaction.TransactionExecutor;
 

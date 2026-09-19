@@ -6,6 +6,7 @@ import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.trading.MerchantOffer;
+import villager_customers.model.CustomerRules;
 import villager_customers.shop.Shop;
 import villager_customers.shop.ShopSearch;
 import villager_customers.transaction.TransactionExecutor;

@@ -1,4 +1,4 @@
-package villager_customers.customer;
+package villager_customers.model;
 
 import org.junit.jupiter.api.Test;
 
