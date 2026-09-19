@@ -4,10 +4,10 @@
 
 | Field | Value |
 |---|---|
-| Name | Create Fly: Villager Customers |
+| Name | Create: Villager Customers |
 | Slug | `villager-customers` |
 | Summary | Villagers walk to your table-cloth shops during working hours and trade their own offers against your stock. |
-| Categories | Utility, Adventure (secondary: Economy) |
+| Categories | Technology, Utility, Adventure (secondary: Game-Mechanics, Management, Economy) |
 | Licence | MIT |
 | Client side | Unsupported |
 | Server side | Required |
@@ -15,7 +15,7 @@
 | Game versions | 26.2 |
 | Dependencies | Create Fly (required), Fabric API (required) |
 | Icon | `icon.png` in this folder: the emerald on the cubealgos navy badge (`just icon` regenerates it) |
-| Links | Source `https://git.cubealgos.de/cubealgos/create_villager_customers` · Issues `https://github.com/cubealgos/create_villager_customers/issues` · Mirror `https://github.com/cubealgos/create_villager_customers` |
+| Links | Source `https://github.com/cubealgos/create_villager_customers` · Issues `https://github.com/cubealgos/create_villager_customers/issues` · Origin `https://git.cubealgos.de/cubealgos/create_villager_customers` |
 
 ## Version settings
 
@@ -78,6 +78,6 @@ with; the mod declares exactly that version).
 ### Support
 
 Through the issue tracker only (https://github.com/cubealgos/create_villager_customers/issues),
-as time allows. Source on Forgejo, mirrored to GitHub. Include your Minecraft, Fabric and Create
-Fly versions, the mod version from the jar name, and the steps that show the problem. MIT
-licensed.
+as time allows. Source on GitHub, mirrored from the cubealgos Forgejo. Include your Minecraft,
+Fabric and Create Fly versions, the mod version from the jar name, and the steps that show the
+problem. MIT licensed.
