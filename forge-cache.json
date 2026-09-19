@@ -1,7 +1,17 @@
 {
   "pulls": {
-    "at": 1789803340.710975,
+    "at": 1789804568.889184,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "documentation/vc-9-navy-icon",
+        "index": "6",
+        "state": "merged",
+        "title": "docs(villager_customers): Modrinth icon: the emerald on the cubealgos navy badge, no vendored texture (VC-9)",
+        "updated": "2026-09-19T07:36:07Z"
+      },
       {
         "author": "scheeren",
         "base": "development",

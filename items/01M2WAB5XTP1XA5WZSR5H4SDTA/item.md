@@ -18,9 +18,9 @@ Edit only `docs/modrinth/body.md` (and `README.md` if it repeats the title). Ver
 
 ## Acceptance criteria
 
-- [ ] `body.md`'s Project settings table carries the `Create:` title, the category set and the GitHub source and issues links.
-- [ ] Where a live project exists, `modrinth-publish.py check` reports no diff on title, categories, additional categories, source and issues; only the body text may differ.
-- [ ] Merged through a Forgejo pull request into `development`.
+- [x] `body.md`'s Project settings table carries the `Create:` title, the category set and the GitHub source and issues links.
+- [x] Where a live project exists, `modrinth-publish.py check` reports no diff on title, categories, additional categories, source and issues; only the body text may differ.
+- [x] Merged through a Forgejo pull request into `development`.
 
 ## Constraints and prior findings
 
