@@ -40,8 +40,9 @@ spec-sync:
     rsync -a --delete "{{vault_spec}}/" docs/spec/
 
 # Render the Modrinth icon on the blueprint badge Create add-ons share.
-# Renders from a placeholder sprite: the mod's own item texture does not exist yet. VC-7 supplies
-# the real sprite and tools/icon.py.
+# Renders from docs/modrinth/placeholder-customer.png: a villager at a table cloth, drawn once by
+# VC-7. This mod adds no block or item of its own to eventually swap in (00-context.md), so unlike
+# the sibling add-ons this placeholder is the icon's final subject, not a stand-in.
 icon:
     python3 tools/icon.py
 
