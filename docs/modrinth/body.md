@@ -14,7 +14,7 @@
 | Loaders | Fabric |
 | Game versions | 26.2 |
 | Dependencies | Create Fly (required), Fabric API (required) |
-| Icon | `icon.png` in this folder: a villager at a table cloth on the round blueprint badge Create add-ons share (`just icon` regenerates it) |
+| Icon | `icon.png` in this folder: the emerald on the cubealgos navy badge (`just icon` regenerates it) |
 | Links | Source `https://git.cubealgos.de/cubealgos/create_villager_customers` · Issues `https://github.com/cubealgos/create_villager_customers/issues` · Mirror `https://github.com/cubealgos/create_villager_customers` |
 
 ## Version settings

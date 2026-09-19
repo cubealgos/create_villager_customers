@@ -39,10 +39,9 @@ client:
 spec-sync:
     rsync -a --delete "{{vault_spec}}/" docs/spec/
 
-# Render the Modrinth icon on the blueprint badge Create add-ons share.
-# Renders from docs/modrinth/placeholder-customer.png: a villager at a table cloth, drawn once by
-# VC-7. This mod adds no block or item of its own to eventually swap in (00-context.md), so unlike
-# the sibling add-ons this placeholder is the icon's final subject, not a stand-in.
+# Render the Modrinth icon on the cubealgos navy badge (VC-9).
+# Renders the vanilla emerald item sprite, read from the Minecraft client jar in the Gradle
+# cache -- this mod adds no block or item of its own to draw instead (00-context.md).
 icon:
     python3 tools/icon.py
 
