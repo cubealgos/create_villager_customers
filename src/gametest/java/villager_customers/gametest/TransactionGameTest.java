@@ -1,6 +1,7 @@
 package villager_customers.gametest;
 
 import com.zurrtum.create.AllItems;
+import com.zurrtum.create.content.logistics.stockTicker.StockTickerBlockEntity;
 import java.util.List;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
@@ -13,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import villager_customers.transaction.ShopAccess;
 import villager_customers.transaction.TransactionExecutor;
 
@@ -74,7 +76,11 @@ public final class TransactionGameTest {
     }
 
     static boolean paymentBoxHolds(TestShopNetwork network, Item item, int count) {
-        var box = network.ticker.receivedPayments;
+        return paymentBoxHolds(network.ticker, item, count);
+    }
+
+    static boolean paymentBoxHolds(StockTickerBlockEntity ticker, Item item, int count) {
+        var box = ticker.receivedPayments;
         int total = 0;
         for (int slot = 0; slot < box.getContainerSize(); slot++) {
             ItemStack stack = box.getItem(slot);
@@ -83,5 +89,10 @@ public final class TransactionGameTest {
             }
         }
         return total == count;
+    }
+
+    static int wheatCount(ChestBlockEntity chest) {
+        ItemStack stack = chest.getItem(0);
+        return stack.is(Items.WHEAT) ? stack.getCount() : 0;
     }
 }

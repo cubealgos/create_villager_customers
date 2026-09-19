@@ -14,6 +14,7 @@ import java.util.UUID;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
+import net.minecraft.world.Containers;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
@@ -89,11 +90,11 @@ public final class TransactionExecutor {
                 return new Result(completed, Result.Reason.BOX_FULL);
             }
 
-            int drawn = drawFromNetwork(ticker, goods);
-            if (drawn < goods.getCount()) {
+            if (!drawFromNetwork(level, ticker, goods)) {
                 // The summary said the network had enough; a concurrent draw within the same tick
-                // (or a stale summary) left less than promised. Refuse rather than pay for a partial
-                // delivery — nothing has been inserted into the box yet.
+                // (or a stale summary) left less than promised. drawFromNetwork has already put back
+                // everything it did manage to draw, so nothing has been inserted into the box, and
+                // nothing already drawn is lost.
                 return new Result(completed, Result.Reason.STOCK_TOO_LOW);
             }
 
@@ -112,10 +113,18 @@ public final class TransactionExecutor {
         return MatchRule.matches(offerCost, offerSecondCost, offerResult, goods, price);
     }
 
-    /** Draws up to {@code goods.getCount()} matching items from the network's packagers; returns how many were actually drawn. */
-    private static int drawFromNetwork(StockTickerBlockEntity ticker, ItemStack goods) {
+    /**
+     * Draws {@code goods.getCount()} matching items from the network's packagers; returns whether
+     * the full count was drawn. On a shortfall (the stock summary said enough was available, but
+     * fewer packagers actually delivered — a stale summary, or a concurrent change), every stack
+     * already extracted is put back into the exact container it came from before returning
+     * {@code false}, so a short draw never destroys items (VC-3 review finding).
+     */
+    private static boolean drawFromNetwork(ServerLevel level, StockTickerBlockEntity ticker, ItemStack goods) {
         UUID freqId = ticker.behaviour.freqId;
         int remaining = goods.getCount();
+        List<ContainerExtension> sources = new ArrayList<>();
+        List<Integer> amountsDrawn = new ArrayList<>();
         for (LogisticallyLinkedBehaviour link : LogisticallyLinkedBehaviour.getAllPresent(freqId, false)) {
             if (remaining <= 0) {
                 break;
@@ -131,9 +140,40 @@ public final class TransactionExecutor {
             if (target == null) {
                 continue;
             }
-            remaining -= ((ContainerExtension) target).extract(goods, remaining);
+            ContainerExtension source = (ContainerExtension) target;
+            int drawnHere = source.extract(goods, remaining);
+            if (drawnHere <= 0) {
+                continue;
+            }
+            sources.add(source);
+            amountsDrawn.add(drawnHere);
+            remaining -= drawnHere;
         }
-        return goods.getCount() - remaining;
+
+        if (remaining > 0) {
+            for (int i = 0; i < sources.size(); i++) {
+                returnDrawnStack(level, ticker, sources.get(i), goods, amountsDrawn.get(i));
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Puts a stack drawn from {@code source} back where it came from. If {@code source} has no room
+     * for it again — it should not normally happen, since the slot the draw took it from was just
+     * freed — whatever does not fit is dropped as an item entity at the ticker's position instead, so
+     * a rollback never simply destroys the item.
+     */
+    private static void returnDrawnStack(ServerLevel level, StockTickerBlockEntity ticker, ContainerExtension source, ItemStack template, int count) {
+        ItemStack returned = template.copyWithCount(count);
+        List<ItemStack> leftover = source.insert(List.of(returned));
+        for (ItemStack stack : leftover) {
+            if (!stack.isEmpty()) {
+                var pos = ticker.getBlockPos();
+                Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, stack);
+            }
+        }
     }
 
     private static StackShape shapeOf(ItemStack stack) {

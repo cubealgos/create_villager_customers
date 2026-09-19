@@ -43,8 +43,55 @@ final class TestShopNetwork {
     static TestShopNetwork build(GameTestHelper helper, int wheatCount) {
         BlockPos chestPos = new BlockPos(1, 1, 2);
         BlockPos packagerPos = new BlockPos(1, 1, 3);
-        BlockPos stockLinkPos = packagerPos.above();
         BlockPos tickerPos = new BlockPos(1, 1, 5);
+
+        ChestAndPackager pair = placeChestAndPackager(helper, chestPos, packagerPos, wheatCount);
+
+        helper.setBlock(tickerPos, AllBlocks.STOCK_TICKER.defaultBlockState());
+        StockTickerBlockEntity ticker = helper.getBlockEntity(tickerPos, StockTickerBlockEntity.class);
+
+        UUID freqId = UUID.randomUUID();
+        pair.link.behaviour.freqId = freqId;
+        ticker.behaviour.freqId = freqId;
+        LogisticallyLinkedBehaviour.keepAlive(pair.link.behaviour);
+        LogisticallyLinkedBehaviour.keepAlive(ticker.behaviour);
+
+        return new TestShopNetwork(chestPos, packagerPos, pair.chest, pair.packager, ticker);
+    }
+
+    /**
+     * Builds a network with <em>two</em> chest-and-packager sources on the same frequency, each with
+     * {@code wheatEach} wheat, sharing one stock ticker (VC-3 review: proving a short draw returns
+     * every stack to its own origin container, not just one).
+     */
+    static TwoSourceNetwork buildTwoSources(GameTestHelper helper, int wheatEach) {
+        BlockPos chestAPos = new BlockPos(1, 1, 2);
+        BlockPos packagerAPos = new BlockPos(1, 1, 3);
+        BlockPos chestBPos = new BlockPos(3, 1, 2);
+        BlockPos packagerBPos = new BlockPos(3, 1, 3);
+        BlockPos tickerPos = new BlockPos(2, 1, 5);
+
+        ChestAndPackager a = placeChestAndPackager(helper, chestAPos, packagerAPos, wheatEach);
+        ChestAndPackager b = placeChestAndPackager(helper, chestBPos, packagerBPos, wheatEach);
+
+        helper.setBlock(tickerPos, AllBlocks.STOCK_TICKER.defaultBlockState());
+        StockTickerBlockEntity ticker = helper.getBlockEntity(tickerPos, StockTickerBlockEntity.class);
+
+        UUID freqId = UUID.randomUUID();
+        a.link.behaviour.freqId = freqId;
+        b.link.behaviour.freqId = freqId;
+        ticker.behaviour.freqId = freqId;
+        LogisticallyLinkedBehaviour.keepAlive(a.link.behaviour);
+        LogisticallyLinkedBehaviour.keepAlive(b.link.behaviour);
+        LogisticallyLinkedBehaviour.keepAlive(ticker.behaviour);
+
+        return new TwoSourceNetwork(a.chest, b.chest, ticker);
+    }
+
+    /** A chest, a packager targeting it (FACING south, chest to its north), and a stock link bound
+     * to the packager (floor-attached, sitting on top of it). */
+    private static ChestAndPackager placeChestAndPackager(GameTestHelper helper, BlockPos chestPos, BlockPos packagerPos, int wheatCount) {
+        BlockPos stockLinkPos = packagerPos.above();
 
         helper.setBlock(chestPos, Blocks.CHEST.defaultBlockState());
         ChestBlockEntity chest = helper.getBlockEntity(chestPos, ChestBlockEntity.class);
@@ -63,16 +110,7 @@ final class TestShopNetwork {
             .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
         PackagerLinkBlockEntity link = helper.getBlockEntity(stockLinkPos, PackagerLinkBlockEntity.class);
 
-        helper.setBlock(tickerPos, AllBlocks.STOCK_TICKER.defaultBlockState());
-        StockTickerBlockEntity ticker = helper.getBlockEntity(tickerPos, StockTickerBlockEntity.class);
-
-        UUID freqId = UUID.randomUUID();
-        link.behaviour.freqId = freqId;
-        ticker.behaviour.freqId = freqId;
-        LogisticallyLinkedBehaviour.keepAlive(link.behaviour);
-        LogisticallyLinkedBehaviour.keepAlive(ticker.behaviour);
-
-        return new TestShopNetwork(chestPos, packagerPos, chest, packager, ticker);
+        return new ChestAndPackager(chest, packager, link);
     }
 
     /** Replaces the chest's single wheat stack (0 empties it). */
@@ -86,9 +124,20 @@ final class TestShopNetwork {
 
     /** Fills every slot of the payment box with an unrelated full stack, leaving it no room at all. */
     void fillPaymentBoxWithJunk() {
+        fillPaymentBoxWithJunk(ticker);
+    }
+
+    static void fillPaymentBoxWithJunk(StockTickerBlockEntity ticker) {
         var box = ticker.receivedPayments;
         for (int slot = 0; slot < box.getContainerSize(); slot++) {
             box.setItem(slot, new ItemStack(Items.COBBLESTONE, 64));
         }
+    }
+
+    private record ChestAndPackager(ChestBlockEntity chest, PackagerBlockEntity packager, PackagerLinkBlockEntity link) {
+    }
+
+    /** Two independent chest-and-packager sources sharing one stock ticker. */
+    record TwoSourceNetwork(ChestBlockEntity chestA, ChestBlockEntity chestB, StockTickerBlockEntity ticker) {
     }
 }
