@@ -26,6 +26,13 @@ A minimal real shop — a table cloth with a price and an encoded request, linke
 - `void aWellFormedShopIsFoundAndLosesCandidacyCorrectly(GameTestHelper helper)`
 - `void aRealShopExecutesATransactionAsShopAccess(GameTestHelper helper)` — Shop#at returned as a ShopAccess for VC-3's TransactionExecutor, executed against a real chest-and-packager network (TestShopNetwork, reused from VC-3's own game tests): a matched offer draws the table cloth's requested wheat and completes one unit, proving Shop is a drop-in ShopAccess rather than merely typing as one.
 
+### `class ShoppingTripGameTest` — `src/gametest/java/villager_customers/gametest/ShoppingTripGameTest.java`
+VC-4's four acceptance-criteria game tests: a full trip and trade while in WORK, no trip at all outside WORK even with a forced roll, a shop removed mid-walk cancelling cleanly with a cooldown, and the mixin coexisting with a second, independently added WORK behaviour (`docs/spec/domains/customer.md` `CUSTOMER-REQ-001`..`009`; `ARCH-FAIL-004`; `TEST-REQ-003`).
+- `void aVillagerInWorkWalksToAMatchingShopAndTrades(GameTestHelper helper)`
+- `void aVillagerNotInWorkAtNightDoesNotStartATripEvenWithAForcedRoll(GameTestHelper helper)`
+- `void aShopRemovedMidWalkCancelsTheTripClearsTheMemoryAndStartsCooldown(GameTestHelper helper)`
+- `void theMixinCoexistsWithASecondIndependentlyAddedWorkBehaviour(GameTestHelper helper)` — `ARCH-FAIL-004`/`TEST-REQ-003`: Brain.addActivity is additive, so a second, independently added WORK behaviour — standing in for another mod's own mixin — must coexist with this mod's own ShoppingTripBehavior, already added by the real VillagerBrainMixin at spawn.
+
 ### `class SmokeGameTest` — `src/gametest/java/villager_customers/gametest/SmokeGameTest.java`
 M0: the mod loads beside Create Fly; everything else follows.
 - `void theModLoadsBesideCreateFly(GameTestHelper helper)`

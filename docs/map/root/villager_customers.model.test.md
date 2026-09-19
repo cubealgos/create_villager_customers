@@ -5,6 +5,11 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class CustomerRulesTest` — `src/test/java/villager_customers/model/CustomerRulesTest.java`
+The chance roll given a fixed random source (`docs/spec/operations/testing.md`'s "Unit" layer; `docs/spec/domains/customer.md` `CUSTOMER-REQ-002`).
+- `void rollsBelowTheChanceSucceed()`
+- `void rollsAtOrAboveTheChanceFail()`
+
 ### `class MatchRuleTest` — `src/test/java/villager_customers/model/MatchRuleTest.java`
 `TRANSACTION-REQ-001`, `TRANSACTION-REQ-008`.
 - `void goodsEqualToCostAndPriceEqualToResultMatches()`
