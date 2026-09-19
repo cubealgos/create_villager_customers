@@ -1,0 +1,22 @@
+# CI runs exactly what runs locally: `just check` on the same JDK floor the platform matrix names.
+# If it passes on a laptop and fails here, that difference is a real finding rather than a
+# configuration guess.
+#
+# Live since 2026-09-19: the repository's home is git.cubealgos.de/cubealgos/create_villager_customers,
+# whose Woodpecker runs this on every push once the repository is enabled there.
+#
+# Temurin 25 is pinned to the JDK major the platform matrix floors on; the Gradle wrapper fetches
+# its own distribution, so the image needs no Gradle.
+
+when:
+  - event: [push, pull_request, manual]
+
+steps:
+  - name: check
+    image: eclipse-temurin:25-jdk
+    environment:
+      # Gradle's daemon has nothing to keep warm in a one-shot container.
+      GRADLE_OPTS: -Dorg.gradle.daemon=false
+    commands:
+      - ./.ci/install-tools.sh
+      - just check

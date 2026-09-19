@@ -1,0 +1,9 @@
+Create Fly: Villager Customers is MIT-licensed (LICENSE).
+
+It runs on and is built against:
+- Create Fly (ZurrTum/Create-Fly), CC0-1.0, mod id `create`: the table-cloth shop blocks, the
+  stock ticker block entity, and the experience nugget item.
+- Create (Creators of Create), MIT: the upstream Create Fly ports.
+- Fabric Loader and Fabric API (FabricMC), Apache-2.0.
+- Minecraft (Mojang): the mod changes villager behaviour through a mixin into `Villager`; no
+  Mojang asset (texture, model or sound) is copied.
