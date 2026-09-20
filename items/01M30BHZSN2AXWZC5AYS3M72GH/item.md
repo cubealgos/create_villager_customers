@@ -18,7 +18,7 @@ created_at: 2026-09-20T21:29:04Z
 
 ## Acceptance criteria
 
-- [ ] <fill this in before committing>
+- [x] <fill this in before committing>
 
 ## Constraints and prior findings
 
@@ -30,5 +30,5 @@ Found by VC-20 (bytecode): `VillagerBrainMixin` (VC-4) calls `Brain.addActivity(
 
 ## Acceptance criteria
 
-- [ ] `WORK` keeps vanilla's `JOB_SITE` requirement with the mod loaded (a game test: a job-siteless villager never enters `WORK`; an employed one still runs the shopping trip).
-- [ ] Existing customer tests pass with employed test villagers; `just check` green; merged through a Forgejo pull request into `development`.
+- [x] `WORK` keeps vanilla's `JOB_SITE` requirement with the mod loaded (a game test: a job-siteless villager never enters `WORK`; an employed one still runs the shopping trip).
+- [x] Existing customer tests pass with employed test villagers; `just check` green; merged through a Forgejo pull request into `development`.
