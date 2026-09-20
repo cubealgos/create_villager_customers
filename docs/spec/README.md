@@ -99,6 +99,7 @@ verify at the first ticket" where it appears.
 | `DEC-007` | The shop earns the trade's xp as `create:experience_nugget`; conversion default proposed | written |
 | `DEC-008` | Shops are found through a point-of-interest registration over table cloth block states | written |
 | `DEC-009` | A random chance per restock decides whether a villager goes shopping; default 50% proposed | written |
+| `DEC-010` | Shops are found across the whole village: 128 blocks from the meeting point, config `shop_search_radius` | written |
 
 ## Open questions gathered
 
