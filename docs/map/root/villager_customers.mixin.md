@@ -5,6 +5,9 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `interface BrainActivityStateAccessor` — `src/main/java/villager_customers/mixin/BrainActivityStateAccessor.java`
+Read-only access to Brain's private activityRequirements and activityMemoriesToEraseWhenStopped maps (VC-21).
+
 ### `class VillagerBrainMixin` — `src/main/java/villager_customers/mixin/VillagerBrainMixin.java`
 Wires the shopping trip and the nitwit keeper seek into a villager's brain, and rolls the restock chance (`docs/spec/04-architecture.md` `ARCH-DEC-002`, `ARCH-DEC-006`; `docs/spec/domains/customer.md` `CUSTOMER-REQ-001`, `002`; `docs/spec/domains/keeper.md` `KEEPER-REQ-004`).
 

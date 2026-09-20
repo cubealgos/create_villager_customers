@@ -3,6 +3,8 @@ package villager_customers.mixin;
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.schedule.Activity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,6 +16,7 @@ import villager_customers.customer.CustomerMemoryModules;
 import villager_customers.customer.ShoppingTripBehavior;
 import villager_customers.keeper.KeeperSeekBehavior;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -71,29 +74,44 @@ final class VillagerBrainMixin {
      * entirely on its own instead (start/stop and its own {@code checkExtraStartConditions}
      * reconciliation), exactly the shape `KEEPER-REQ-011`/`012` need.
      *
-     * <p><b>Findings (`VC-20`): {@code Activity.WORK} is reachable for every villager here, job site
-     * or not — including a nitwit.</b> {@code javap -p -c} against {@code Brain.addActivity} shows
-     * its third parameter (the activity-start requirement) is stored via a plain, unconditional
-     * {@code activityRequirements.put(activity, thatSet)} — a replace, not a merge. `CUSTOMER-REQ-001`'s
-     * own call here passes {@code Set.of()} for {@code WORK}, which overwrites vanilla's own
-     * requirement ({@code MemoryModuleType.JOB_SITE} at {@code MemoryStatus.VALUE_PRESENT}, confirmed
-     * via {@code javap -p -c} against {@code Villager}'s static brain-package builder, {@link
-     * KeeperSeekBehavior}'s own Javadoc) with nothing at all. Re-supplying vanilla's own requirement
-     * here was tried and reverted (this ticket's own Findings): every existing {@code CUSTOMER} game
-     * test forces {@code Activity.WORK} on a bare test villager with no job site at all
-     * (`ShoppingTripGameTest`'s own convention, predating this ticket), so restoring the requirement
-     * broke five already-passing tests outright — this mod's own established behaviour genuinely
-     * treats a job site as unnecessary for a shopping trip, not merely an oversight nobody noticed.
-     * {@link KeeperSeekBehavior#canStillUse} therefore does not gate on {@code Activity.IDLE} being
-     * active either, for the same reason: a nitwit's own {@code Activity} can flip to {@code WORK}
-     * mid-walk exactly as any other villager's can, with nothing of this mod's own running there for
-     * a nitwit (no job site, no offers), so there is nothing to cancel for.
+     * <p><b>Fixed (`VC-21`, superseding `VC-20`'s own Findings paragraph above):</b> {@code
+     * javap -p -c} against {@code Brain.addActivity} confirmed its third parameter (the
+     * activity-start requirement) is stored via a plain, unconditional {@code
+     * activityRequirements.put(activity, thatSet)} — a replace, not a merge — so
+     * {@code CUSTOMER-REQ-001}'s call here used to pass {@code Set.of()} for {@code WORK} and wipe
+     * vanilla's own requirement ({@code MemoryModuleType.JOB_SITE} at
+     * {@code MemoryStatus.VALUE_PRESENT}, registered by {@code Villager.BRAIN_PROVIDER} before this
+     * method ever runs) with nothing at all, letting a job-siteless villager — nitwits included —
+     * into {@code WORK}, which vanilla never allows. Fixed by reading the brain's own
+     * already-registered requirement and erase-on-stop sets for {@code WORK} through {@link
+     * BrainActivityStateAccessor} and carrying them forward instead of replacing them, so this
+     * mod's own re-registration is additive on every axis {@code Brain.addActivity} touches, not
+     * just the behaviour set. {@code Activity.IDLE} needed no such fix and is left exactly as
+     * `VC-20` wrote it: vanilla's own {@code IDLE} package is built through {@code ActivityData}'s
+     * no-conditions overload (confirmed the same way), so it carries no requirement to begin with —
+     * {@link KeeperSeekBehavior}'s own {@code Set.of()} here replaces nothing.
+     *
+     * <p><b>Verdict (`VC-21`, checked at the coordinator's request):</b> {@code refreshBrain} cannot
+     * duplicate either behaviour — it never mutates the villager's existing {@code Brain} in place
+     * (no {@code copyWithoutBehaviors()} exists in 26.2); it calls {@code stopAll} on the old one,
+     * then builds an entirely new {@code Brain} via {@code BRAIN_PROVIDER.makeBrain(this,
+     * oldBrain.pack())} — carrying over only memories, not behaviours — and only then calls this
+     * method once against that fresh instance, exactly as {@code makeBrain} does (confirmed by
+     * {@code javap -p -c} against {@code Villager.refreshBrain} and {@code Brain.pack}).
      */
     @Inject(method = "registerBrainGoals", at = @At("RETURN"))
     private void villager_customers$addShoppingTrip(Brain<Villager> brain, CallbackInfo ci) {
+        BrainActivityStateAccessor accessor = (BrainActivityStateAccessor) brain;
+        Set<Pair<MemoryModuleType<?>, MemoryStatus>> workRequirements = new HashSet<>(
+            accessor.villager_customers$activityRequirements().getOrDefault(Activity.WORK, Set.of())
+        );
+        Set<MemoryModuleType<?>> workEraseOnStop = new HashSet<>(
+            accessor.villager_customers$activityMemoriesToEraseWhenStopped().getOrDefault(Activity.WORK, Set.of())
+        );
+        workEraseOnStop.add(CustomerMemoryModules.SHOPPING_TRIP_TARGET);
+
         brain.addActivity(
-            Activity.WORK, ImmutableList.of(Pair.of(WORK_PRIORITY, new ShoppingTripBehavior())), Set.of(),
-            Set.of(CustomerMemoryModules.SHOPPING_TRIP_TARGET)
+            Activity.WORK, ImmutableList.of(Pair.of(WORK_PRIORITY, new ShoppingTripBehavior())), workRequirements, workEraseOnStop
         );
         brain.addActivity(Activity.IDLE, ImmutableList.of(Pair.of(IDLE_PRIORITY, new KeeperSeekBehavior())), Set.of(), Set.of());
     }

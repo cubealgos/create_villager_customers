@@ -4,6 +4,7 @@
   "package": "villager_customers.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "BrainActivityStateAccessor",
     "VillagerBrainMixin",
     "VillagerBreedingMixin",
     "VillagerRewardTradeXpMixin"
