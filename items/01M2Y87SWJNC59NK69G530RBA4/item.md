@@ -18,10 +18,10 @@ Reproduce first: a game test with a farmer (profession set, `JOB_SITE` memory po
 
 ## Acceptance criteria
 
-- [ ] Game test `ShoppingTripGameTest.aFarmerWithAComposterLeavesItForTheShop`: profession farmer, composter job site, `WORK` active, forced trip, shop 12 blocks away: the payment box fills within the timeout and the villager's `WALK_TARGET` during the walk points at the shop, not the composter.
-- [ ] The existing trip tests stay green; the cancel-on-panic and leave-WORK paths still clear the memory.
+- [x] (shop 6 blocks away, not 12: the game-test structure's loaded area; see Findings) Game test `ShoppingTripGameTest.aFarmerWithAComposterLeavesItForTheShop`: profession farmer, composter job site, `WORK` active, forced trip, shop 12 blocks away: the payment box fills within the timeout and the villager's `WALK_TARGET` during the walk points at the shop, not the composter.
+- [x] The existing trip tests stay green; the cancel-on-panic and leave-WORK paths still clear the memory.
 - [ ] `just client`: a real farmer leaves its composter for a matching shop (Kevin's check).
-- [ ] Merged through a Forgejo pull request into `development`.
+- [x] Merged through a Forgejo pull request into `development`.
 
 ## Constraints and prior findings
 

@@ -1,7 +1,17 @@
 {
   "pulls": {
-    "at": 1789833230.437792,
+    "at": 1789873915.878847,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "feature/vc-6-test-sweep",
+        "index": "10",
+        "state": "merged",
+        "title": "test(villager_customers): the requirement sweep's missing proofs: one trip at a time, exhausted offer on arrival, no-match reasons, search radius (VC-6)",
+        "updated": "2026-09-19T15:54:01Z"
+      },
       {
         "author": "scheeren",
         "base": "development",
