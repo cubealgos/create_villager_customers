@@ -76,13 +76,19 @@ public final class TransactionExecutor {
             return new Result(0, Result.Reason.NO_MATCH);
         }
 
+        // TRANSACTION-REQ-011: matches() has already confirmed the shop's one non-empty goods stack
+        // satisfies offer.getItemCostA()'s predicate; every unit of this visit draws that same real,
+        // component-bearing stack (not a stack synthesised from the offer alone), so the exact-match
+        // extraction below only ever pulls stock that actually satisfies the offer.
+        ItemStack goodsTemplate = singleGoodsStack(shop);
+
         int completed = 0;
         while (true) {
             if (offer.getUses() >= offer.getMaxUses()) {
                 return new Result(completed, Result.Reason.OUT_OF_USES);
             }
 
-            ItemStack goods = offer.getCostA().copy();
+            ItemStack goods = goodsTemplate.copy();
             ItemStack price = offer.getResult().copy();
             // The orb's own roll (TRANSACTION-REQ-010): vanilla's Villager.rewardTradeXp would spawn
             // an ExperienceOrb worth exactly 3 + random.nextInt(4) xp; the mixin suppresses that orb
@@ -187,18 +193,44 @@ public final class TransactionExecutor {
     }
 
     /**
-     * Whether {@code offer} and {@code shop} mirror each other (`TRANSACTION-REQ-001`), exposed
-     * {@code public} for {@code VC-4}'s restock search, which needs the same match rule this
-     * executor uses to test an offer against a candidate shop before remembering it as a trip target
-     * (`docs/spec/domains/customer.md` `CUSTOMER-REQ-003`).
+     * Whether {@code offer} and {@code shop} mirror each other (`TRANSACTION-REQ-001`, and, on top
+     * of the pure shape match, `TRANSACTION-REQ-011`), exposed {@code public} for {@code VC-4}'s
+     * restock search, which needs the same match rule this executor uses to test an offer against a
+     * candidate shop before remembering it as a trip target (`docs/spec/domains/customer.md`
+     * `CUSTOMER-REQ-003`).
      */
     public static boolean matches(MerchantOffer offer, ShopAccess shop) {
         StackShape offerCost = shapeOf(offer.getCostA());
         Optional<StackShape> offerSecondCost = offer.getItemCostB().map(cost -> shapeOf(cost.itemStack()));
         StackShape offerResult = shapeOf(offer.getResult());
-        List<StackShape> goods = shop.goods().stream().filter(stack -> !stack.isEmpty()).map(TransactionExecutor::shapeOf).toList();
+        List<ItemStack> goodsStacks = shop.goods().stream().filter(stack -> !stack.isEmpty()).toList();
+        List<StackShape> goods = goodsStacks.stream().map(TransactionExecutor::shapeOf).toList();
         StackShape price = shapeOf(shop.price());
-        return MatchRule.matches(offerCost, offerSecondCost, offerResult, goods, price);
+        if (!MatchRule.matches(offerCost, offerSecondCost, offerResult, goods, price)) {
+            return false;
+        }
+
+        // TRANSACTION-REQ-011: MatchRule (kept pure, no Minecraft imports) only ever compares plain
+        // (itemId, count) shapes, which say nothing about components. Components live outside that
+        // shape entirely, so the offer's own cost predicate is checked here instead, against the
+        // shop's one real, component-bearing goods stack MatchRule.matches just confirmed exists
+        // (goods.size() == 1 is part of what "matches" already means).
+        return offer.getItemCostA().test(goodsStacks.get(0));
+    }
+
+    /**
+     * The shop's single non-empty configured goods stack, real components included — the same stack
+     * {@link #matches} already confirmed both mirrors the offer's cost shape and satisfies its cost
+     * predicate (`TRANSACTION-REQ-001`, `TRANSACTION-REQ-011`). Callers only ever reach this after
+     * {@link #matches} has returned {@code true}, so exactly one such stack is guaranteed to exist.
+     */
+    private static ItemStack singleGoodsStack(ShopAccess shop) {
+        for (ItemStack stack : shop.goods()) {
+            if (!stack.isEmpty()) {
+                return stack;
+            }
+        }
+        throw new IllegalStateException("matches() already confirmed exactly one non-empty goods stack");
     }
 
     /**

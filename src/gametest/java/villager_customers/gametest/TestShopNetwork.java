@@ -41,11 +41,19 @@ final class TestShopNetwork {
 
     /** Builds the network with {@code wheatCount} wheat already in the chest (0 for an empty chest). */
     static TestShopNetwork build(GameTestHelper helper, int wheatCount) {
+        return build(helper, wheatCount > 0 ? new ItemStack(Items.WHEAT, wheatCount) : ItemStack.EMPTY);
+    }
+
+    /**
+     * Builds the network with {@code stack} already in the chest (`VC-15`: a component-bearing stack,
+     * not just wheat, so a game test can prove the draw honours an offer's cost predicate).
+     */
+    static TestShopNetwork build(GameTestHelper helper, ItemStack stack) {
         BlockPos chestPos = new BlockPos(1, 1, 2);
         BlockPos packagerPos = new BlockPos(1, 1, 3);
         BlockPos tickerPos = new BlockPos(1, 1, 5);
 
-        ChestAndPackager pair = placeChestAndPackager(helper, chestPos, packagerPos, wheatCount);
+        ChestAndPackager pair = placeChestAndPackager(helper, chestPos, packagerPos, stack);
 
         helper.setBlock(tickerPos, AllBlocks.STOCK_TICKER.defaultBlockState());
         StockTickerBlockEntity ticker = helper.getBlockEntity(tickerPos, StockTickerBlockEntity.class);
@@ -65,14 +73,25 @@ final class TestShopNetwork {
      * every stack to its own origin container, not just one).
      */
     static TwoSourceNetwork buildTwoSources(GameTestHelper helper, int wheatEach) {
+        ItemStack stack = new ItemStack(Items.WHEAT, wheatEach);
+        return buildTwoSources(helper, stack, stack.copy());
+    }
+
+    /**
+     * Builds a network with <em>two</em> chest-and-packager sources on the same frequency, one
+     * holding {@code stackA} and the other {@code stackB} (`VC-15`: two component-bearing variants of
+     * the same item, proving a draw takes only the one satisfying an offer's cost predicate and
+     * leaves the other untouched).
+     */
+    static TwoSourceNetwork buildTwoSources(GameTestHelper helper, ItemStack stackA, ItemStack stackB) {
         BlockPos chestAPos = new BlockPos(1, 1, 2);
         BlockPos packagerAPos = new BlockPos(1, 1, 3);
         BlockPos chestBPos = new BlockPos(3, 1, 2);
         BlockPos packagerBPos = new BlockPos(3, 1, 3);
         BlockPos tickerPos = new BlockPos(2, 1, 5);
 
-        ChestAndPackager a = placeChestAndPackager(helper, chestAPos, packagerAPos, wheatEach);
-        ChestAndPackager b = placeChestAndPackager(helper, chestBPos, packagerBPos, wheatEach);
+        ChestAndPackager a = placeChestAndPackager(helper, chestAPos, packagerAPos, stackA);
+        ChestAndPackager b = placeChestAndPackager(helper, chestBPos, packagerBPos, stackB);
 
         helper.setBlock(tickerPos, AllBlocks.STOCK_TICKER.defaultBlockState());
         StockTickerBlockEntity ticker = helper.getBlockEntity(tickerPos, StockTickerBlockEntity.class);
@@ -90,12 +109,12 @@ final class TestShopNetwork {
 
     /** A chest, a packager targeting it (FACING south, chest to its north), and a stock link bound
      * to the packager (floor-attached, sitting on top of it). */
-    private static ChestAndPackager placeChestAndPackager(GameTestHelper helper, BlockPos chestPos, BlockPos packagerPos, int wheatCount) {
+    private static ChestAndPackager placeChestAndPackager(GameTestHelper helper, BlockPos chestPos, BlockPos packagerPos, ItemStack stack) {
         BlockPos stockLinkPos = packagerPos.above();
 
         helper.setBlock(chestPos, Blocks.CHEST.defaultBlockState());
         ChestBlockEntity chest = helper.getBlockEntity(chestPos, ChestBlockEntity.class);
-        setWheat(chest, wheatCount);
+        chest.setItem(0, stack);
 
         // FACING = SOUTH: the packager's target inventory (opposite of facing, TransactionExecutor's
         // research pass) is to the NORTH, at chestPos.

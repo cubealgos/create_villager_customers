@@ -60,6 +60,7 @@ what makes a table cloth count as a shop in the first place (`domains/shop.md`).
 | `TRANSACTION-REQ-008` | The system shall never match an offer whose cost has a second item (`getItemCostB()` present): a table cloth's price is one item. | Must | Research §A |
 | `TRANSACTION-REQ-009` | The system shall leave `MerchantOffer.getDemand()`/`updateDemand()` and villager-player reputation untouched by a mod-driven unit. | Must | `TRANSACTION-DEC-002` |
 | `TRANSACTION-REQ-010` | When a unit completes, the system shall spawn no experience orb (vanilla's `rewardTradeXp` orb, 3 to 6 xp, is suppressed for the mod-driven unit) and shall insert experience nuggets worth that orb's roll instead: `3 + random(4)` xp divided by one nugget's 3 xp, rounded up, so one or two nuggets per unit; the villager's own levelling xp is unchanged (Kevin, 2026-09-19 and 2026-09-20; `decisions/DEC-007-xp-nuggets.md`). | Must | `decisions/DEC-007-xp-nuggets.md` |
+| `TRANSACTION-REQ-011` | The match shall honour the offer's cost predicate: the shop's goods stack must satisfy `ItemCost.test` (its item id and its component predicate), on top of the plain shape match, and the draw shall take only stacks that satisfy it. | Must | `create_firearms` `decisions/DEC-016-villager-customers-requirement.md`, Kevin 2026-09-20 |
 
 ## 6. Failure modes
 
@@ -86,3 +87,13 @@ what makes a table cloth count as a shop in the first place (`domains/shop.md`).
   never calls `updateDemand()` and never touches player-villager reputation, since no player is
   involved. **Cost if wrong:** if Kevin later wants villager trades to feel demand pressure from
   mod-driven trades too, this is one added call, not a redesign.
+- `TRANSACTION-DEC-003` — **The offer's component predicate is honoured, not just its plain shape**
+  (Kevin, 2026-09-20, citing `create_firearms`'s
+  `decisions/DEC-016-villager-customers-requirement.md`): `StackShape`'s id-and-count match alone let
+  a shop selling *any* configuration of an item satisfy an offer wanting one specific configuration
+  (e.g. a specific enchanted book, or a firearm with specific attachments). `TRANSACTION-REQ-011`
+  closes this by checking `offer.getItemCostA().test(...)` against the shop's own real,
+  component-bearing goods stack, and by drawing that same real stack rather than one synthesised
+  from the offer alone. **Cost if wrong:** none beyond this ticket — this is the
+  `create_villager_customers` half of a cross-project requirement `create_firearms` already recorded
+  as blocking on it.
