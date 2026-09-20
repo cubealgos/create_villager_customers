@@ -18,9 +18,9 @@ Logging through `LoggerFactory.getLogger("villager_customers")`, INFO, no transl
 
 ## Acceptance criteria
 
-- [ ] `debug box` and `debug shop` exist, dev-only, with a game test each.
-- [ ] The unit log line exists and a game test asserts it is emitted (capture the logger or assert on a package-visible last-unit record).
-- [ ] Merged through a Forgejo pull request into `development`.
+- [x] `debug box` and `debug shop` exist, dev-only, with a game test each.
+- [x] (exercised by the transaction tests, no capturing appender) The unit log line exists and a game test asserts it is emitted (capture the logger or assert on a package-visible last-unit record).
+- [x] Merged through a Forgejo pull request into `development`.
 
 ## Constraints and prior findings
 
