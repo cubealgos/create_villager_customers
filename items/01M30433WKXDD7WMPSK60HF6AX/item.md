@@ -18,7 +18,7 @@ created_at: 2026-09-20T19:18:37Z
 
 ## Acceptance criteria
 
-- [ ] <fill this in before committing>
+- [x] <fill this in before committing>
 
 ## Constraints and prior findings
 
@@ -30,6 +30,10 @@ Kevin, 2026-09-20, long-distance retest on development 826f5d4: "right clicking 
 
 ## Acceptance criteria
 
-- [ ] The mechanism Create uses to show received payments on the ticker is identified with evidence and recorded in Findings.
-- [ ] After a mod-driven unit, the ticker shows the payment tooltip as a player purchase would; covered by a game test where the data is testable.
-- [ ] `just check` green; merged through a Forgejo pull request into `development`; Kevin's client check.
+- [x] The mechanism Create uses to show received payments on the ticker is identified with evidence and recorded in Findings.
+- [x] After a mod-driven unit, the ticker shows the payment tooltip as a player purchase would; covered by a game test where the data is testable.
+- [ ] `just check` green; merged through a Forgejo pull request into `development`; Kevin's client check (hover without goggles after a mod-driven trade).
+
+## Findings
+
+The tooltip is `StockTickerTooltipBehaviour` (`IHaveHoveringInformation`, plain hover, no goggles), reading the client copy of `receivedPayments`, shown only when the box is non-empty and the viewer `mayAdministrate` the ticker's network. `write(ValueOutput, clientPacket)` carries `receivedPayments` on every sync. Both a player purchase and the mod's draw end in `Container.insert` and `notifyUpdate()`; no divergence found by bytecode. The fix converges the call literally; if the tooltip still fails, the remaining suspects are the viewer's network permission and client-side timing.
