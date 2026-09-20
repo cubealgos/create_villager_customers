@@ -43,6 +43,13 @@ import villager_customers.customer.CustomerMemoryModules;
  * {@link CommandSource} so the feedback {@code DebugCommand} sends can be asserted on directly, by
  * the translation key of the {@link TranslatableContents} it carries — robust to a dedicated
  * server's lack of client-side localisation, unlike asserting on the rendered English text.
+ *
+ * <p>{@code VC-14}'s {@code box} and {@code shop} cases below are the exception: those two
+ * subcommands print plain {@code Component.literal} text rather than a translated key (their
+ * content — a live box listing, a live shop resolution — is inherently dynamic, not a fixed
+ * message), so their own assertions check the rendered text directly through
+ * {@link CapturingSource#hasText}, which is exactly as reliable as {@code getString()} for a
+ * literal component (no locale lookup involved, unlike a translatable one).
  */
 public final class DebugCommandGameTest {
     @GameTest(maxTicks = 60)
@@ -200,6 +207,61 @@ public final class DebugCommandGameTest {
         });
     }
 
+    /** {@code VC-14}: a real ticker with an emerald inserted straight into its payment box. */
+    @GameTest
+    public void boxListsEveryNonEmptyStackInTheTickersPaymentBox(GameTestHelper helper) {
+        TestShopNetwork network = TestShopNetwork.build(helper, 0);
+        BlockPos tickerRelative = new BlockPos(1, 1, 5); // TestShopNetwork.build's own ticker position
+        BlockPos tickerPos = helper.absolutePos(tickerRelative);
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
+
+        helper.runAfterDelay(2, () -> {
+            network.ticker.receivedPayments.setItem(0, new ItemStack(Items.EMERALD, 1));
+
+            CapturingSource capturing = new CapturingSource();
+            CommandSourceStack source = sourceFor(helper, capturing, villager);
+            helper.getLevel().getServer().getCommands().performPrefixedCommand(
+                source, "villager_customers debug box " + tickerPos.getX() + " " + tickerPos.getY() + " " + tickerPos.getZ()
+            );
+
+            helper.assertTrue(capturing.hasText("1 x minecraft:emerald"), "the box line lists the inserted emerald: " + capturing.describe());
+            helper.succeed();
+        });
+    }
+
+    /** {@code VC-14}: a cloth built with {@link TestShopNetwork}, the same real shop the other tests trade against. */
+    @GameTest(maxTicks = 60)
+    public void shopPrintsTheResolvedShopForARealCloth(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        TestShopNetwork network = TestShopNetwork.build(helper, 20);
+        BlockPos tickerRelative = new BlockPos(1, 1, 5);
+        BlockPos keeperRelative = tickerRelative.east(1);
+        BlockPos clothRelative = new BlockPos(1, 1, 7);
+        BlockPos clothPos = helper.absolutePos(clothRelative);
+
+        helper.setBlock(clothRelative, AllBlocks.ANDESITE_TABLE_CLOTH);
+        helper.setBlock(
+            keeperRelative, AllBlocks.BLAZE_BURNER.defaultBlockState().setValue(BlazeBurnerBlock.HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.SMOULDERING)
+        );
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 3));
+
+        helper.runAfterDelay(3, () -> {
+            configureCloth(helper, clothRelative, tickerRelative);
+
+            CapturingSource capturing = new CapturingSource();
+            CommandSourceStack source = sourceFor(helper, capturing, villager);
+            level.getServer().getCommands().performPrefixedCommand(
+                source, "villager_customers debug shop " + clothPos.getX() + " " + clothPos.getY() + " " + clothPos.getZ()
+            );
+
+            helper.assertTrue(
+                capturing.hasText("keeper present") && capturing.hasText("1 x minecraft:emerald") && capturing.hasText("20 x minecraft:wheat"),
+                "the shop line reports the resolved ticker, keeper presence, price and goods: " + capturing.describe()
+            );
+            helper.succeed();
+        });
+    }
+
     private static void configureCloth(GameTestHelper helper, BlockPos clothRelative, BlockPos tickerRelative) {
         BlockPos clothPos = helper.absolutePos(clothRelative);
         BlockPos tickerPos = helper.absolutePos(tickerRelative);
@@ -256,6 +318,12 @@ public final class DebugCommandGameTest {
 
         boolean hasKey(String key) {
             return messages.stream().anyMatch(m -> m.getContents() instanceof TranslatableContents t && t.getKey().equals(key));
+        }
+
+        /** {@code VC-14}: whether any message's rendered text contains {@code substring} — safe for a
+         * {@code Component.literal} message (no locale lookup involved), unlike a translatable one. */
+        boolean hasText(String substring) {
+            return messages.stream().anyMatch(m -> m.getString().contains(substring));
         }
 
         String describe() {

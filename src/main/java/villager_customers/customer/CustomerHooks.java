@@ -6,6 +6,8 @@ import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.trading.MerchantOffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import villager_customers.model.CustomerRules;
 import villager_customers.shop.Shop;
 import villager_customers.shop.ShopSearch;
@@ -27,6 +29,9 @@ import java.util.function.DoubleSupplier;
  * (`docs/spec/operations/testing.md`'s "Development tool" row, `VC-5`).
  */
 public final class CustomerHooks {
+    /** {@code VC-14}: instrumentation for Kevin's live payment-box bug hunt, greppable as {@code VC14}. */
+    private static final Logger LOGGER = LoggerFactory.getLogger("villager_customers");
+
     /**
      * The chance roll's random source: {@link Math#random()} in production, overridable in game
      * tests for a forced roll (`docs/spec/operations/testing.md`). Deliberately {@code public} —
@@ -117,15 +122,29 @@ public final class CustomerHooks {
      */
     public static Search search(ServerLevel level, Villager villager) {
         if (eligibleOffers(villager).isEmpty()) {
-            return new Search(Optional.empty(), Optional.empty(), Search.Reason.NO_OFFER_WITH_USES_LEFT);
+            Search result = new Search(Optional.empty(), Optional.empty(), Search.Reason.NO_OFFER_WITH_USES_LEFT);
+            logSearch(villager, result);
+            return result;
         }
         Optional<Shop> shop = ShopSearch.matching(
             level, villager.blockPosition(), ShopSearch.VILLAGE_REACH, candidate -> matchingOffer(villager, candidate).isPresent()
         );
         if (shop.isEmpty()) {
-            return new Search(Optional.empty(), Optional.empty(), Search.Reason.NO_SHOP_MATCHING_OFFER);
+            Search result = new Search(Optional.empty(), Optional.empty(), Search.Reason.NO_SHOP_MATCHING_OFFER);
+            logSearch(villager, result);
+            return result;
         }
-        return new Search(shop, matchingOffer(villager, shop.get()), Search.Reason.MATCH);
+        Search result = new Search(shop, matchingOffer(villager, shop.get()), Search.Reason.MATCH);
+        logSearch(villager, result);
+        return result;
+    }
+
+    /** {@code VC-14}: greppable trace of every {@link #search} result. */
+    private static void logSearch(Villager villager, Search result) {
+        LOGGER.info(
+            "VC14 search villager={} reason={} shop={}", villager.getUUID(), result.reason(),
+            result.shop().map(shop -> shop.pos().toShortString()).orElse("none")
+        );
     }
 
     /**

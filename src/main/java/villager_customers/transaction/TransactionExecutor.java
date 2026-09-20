@@ -18,6 +18,8 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import villager_customers.model.MatchRule;
 import villager_customers.model.NuggetConversion;
 import villager_customers.model.StackShape;
@@ -39,6 +41,9 @@ import villager_customers.model.StackShape;
  * every step a public method or a public field, so no accessor mixin was needed for `ARCH-DEC-004`.
  */
 public final class TransactionExecutor {
+    /** {@code VC-14}: instrumentation for Kevin's live payment-box bug hunt, greppable as {@code VC14}. */
+    private static final Logger LOGGER = LoggerFactory.getLogger("villager_customers");
+
     /**
      * The xp one {@code create:experience_nugget} is worth, read from
      * {@code ExperienceNuggetItem.use()} in the Create Fly jar at this ticket: {@code 3.0f} xp per
@@ -92,6 +97,11 @@ public final class TransactionExecutor {
             // that the always-fresh read is worth it, and it keeps this check from seeing stock a
             // player only just placed, or drew, as stale.
             StockTickerBlockEntity ticker = shop.ticker();
+            LOGGER.info(
+                "VC14 unit entry villager={} shop={} ticker={} tickerId={} tickerRemoved={} box=[{}]", villager.getUUID(),
+                shop.pos().toShortString(), ticker.getBlockPos().toShortString(), System.identityHashCode(ticker), ticker.isRemoved(),
+                describeBox(ticker.getReceivedPaymentsHandler())
+            );
             InventorySummary summary = ticker.getAccurateSummary();
             if (summary.getCountOf(goods) < goods.getCount()) {
                 return new Result(completed, Result.Reason.STOCK_TOO_LOW);
@@ -119,6 +129,10 @@ public final class TransactionExecutor {
             // the goods are ever touched, and refuse the unit as BOX_FULL.
             beforeInsertHookForTesting.run();
             List<ItemStack> leftover = box.insert(payment);
+            LOGGER.info(
+                "VC14 unit insert villager={} payment=[{}] leftover=[{}] box=[{}]", villager.getUUID(), describeStacks(payment),
+                describeStacks(leftover), describeBox((Container) box)
+            );
             if (!leftover.isEmpty()) {
                 List<ItemStack> landed = landedStacks(box, payment, leftover);
                 if (!landed.isEmpty()) {
@@ -127,7 +141,14 @@ public final class TransactionExecutor {
                 return new Result(completed, Result.Reason.BOX_FULL);
             }
 
-            if (!drawFromNetwork(level, ticker, goods)) {
+            boolean drawnOk = drawFromNetwork(level, ticker, goods);
+            // stockRemaining reuses getAccurateSummary()'s per-tick cache, already paid for above:
+            // cheap enough to log every unit (VC-14).
+            LOGGER.info(
+                "VC14 unit draw villager={} drawnOk={} stockRemaining={}", villager.getUUID(), drawnOk,
+                ticker.getAccurateSummary().getCountOf(goods)
+            );
+            if (!drawnOk) {
                 // The full payment already landed for a unit whose goods could not, after all, be
                 // drawn in full (a stale summary, or a concurrent draw within the same tick, exactly
                 // as drawFromNetwork's own rollback already accounts for on the goods side): take
@@ -158,6 +179,9 @@ public final class TransactionExecutor {
             } finally {
                 ModDrivenTrade.end();
             }
+            LOGGER.info(
+                "VC14 unit trade villager={} box=[{}] villagerXp={}", villager.getUUID(), describeBox((Container) box), villager.getVillagerXp()
+            );
             completed++;
         }
     }
@@ -242,6 +266,34 @@ public final class TransactionExecutor {
 
     private static StackShape shapeOf(ItemStack stack) {
         return new StackShape(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), stack.getCount());
+    }
+
+    /** {@code VC-14}: every non-empty stack currently in {@code box}, formatted {@code count x id}. */
+    private static String describeBox(Container box) {
+        List<ItemStack> stacks = new ArrayList<>();
+        for (int slot = 0; slot < box.getContainerSize(); slot++) {
+            ItemStack stack = box.getItem(slot);
+            if (!stack.isEmpty()) {
+                stacks.add(stack);
+            }
+        }
+        return describeStacks(stacks);
+    }
+
+    /** {@code VC-14}: {@code stacks}, formatted {@code count x id} each, joined for a log line. */
+    private static String describeStacks(List<ItemStack> stacks) {
+        List<String> parts = new ArrayList<>(stacks.size());
+        for (ItemStack stack : stacks) {
+            if (!stack.isEmpty()) {
+                parts.add(formatStack(stack));
+            }
+        }
+        return parts.isEmpty() ? "none" : String.join(", ", parts);
+    }
+
+    /** {@code VC-14}: {@code stack} as {@code count x id}, e.g. {@code 1 x minecraft:emerald}. */
+    private static String formatStack(ItemStack stack) {
+        return stack.getCount() + " x " + BuiltInRegistries.ITEM.getKey(stack.getItem());
     }
 
     /**

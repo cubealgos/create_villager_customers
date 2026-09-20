@@ -12,6 +12,8 @@ VC-5's three acceptance-criteria game tests for villager_customers.debug.DebugCo
 - `void searchReportsNoShopMatchingOffer(GameTestHelper helper)` — VC-6 sweep gap, same finding as #searchReportsNoOfferWithUsesLeft: an eligible offer with no reachable shop at all.
 - `void rollSetsTheForcedFlag(GameTestHelper helper)`
 - `void tripEndsWithThePaymentBoxHoldingThePriceWithinTheTimeout(GameTestHelper helper)`
+- `void boxListsEveryNonEmptyStackInTheTickersPaymentBox(GameTestHelper helper)` — VC-14: a real ticker with an emerald inserted straight into its payment box.
+- `void shopPrintsTheResolvedShopForARealCloth(GameTestHelper helper)` — VC-14: a cloth built with TestShopNetwork, the same real shop the other tests trade against.
 
 ### `class RefusalGameTest` — `src/gametest/java/villager_customers/gametest/RefusalGameTest.java`
 VC-3: the three ways a unit is refused before anything moves — insufficient network stock, a full payment box, and an offer that never matches at all (`docs/spec/domains/transaction.md` `TRANSACTION-FAIL-001`, `TRANSACTION-FAIL-002`, `TRANSACTION-FAIL-003`).
