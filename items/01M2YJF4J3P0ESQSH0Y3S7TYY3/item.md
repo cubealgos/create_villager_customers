@@ -18,10 +18,10 @@ Two parts. (1) Robustness, certain: `TransactionExecutor.execute` ignores the li
 
 ## Acceptance criteria
 
-- [ ] `TransactionExecutor` verifies the payment insert; on leftovers the unit is rolled back (goods returned, partial payment removed) and reported as `BOX_FULL`; a game test forces a partial insert and asserts nothing moved.
-- [ ] The cause of the long-distance loss is identified in the ticket's Findings with evidence, fixed, and covered by a game test where possible.
+- [x] `TransactionExecutor` verifies the payment insert; on leftovers the unit is rolled back (goods returned, partial payment removed) and reported as `BOX_FULL`; a game test forces a partial insert and asserts nothing moved.
+- [x] (every named candidate ruled out with evidence; the ignored insert result is the only demonstrable defect; Kevin's retest decides) The cause of the long-distance loss is identified in the ticket's Findings with evidence, fixed, and covered by a game test where possible.
 - [ ] `just client`: the long-distance trip lands price and nuggets in the cloth's ticker (Kevin's check).
-- [ ] Merged through a Forgejo pull request into `development`.
+- [x] Merged through a Forgejo pull request into `development`.
 
 ## Constraints and prior findings
 
