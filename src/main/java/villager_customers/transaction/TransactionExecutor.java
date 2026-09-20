@@ -172,8 +172,36 @@ public final class TransactionExecutor {
             // and synced to nearby clients by this point. Called again here regardless (VC-13's own
             // Approach): cheap, and it keeps this unit's own persistence and sync from silently
             // depending on that Create Fly implementation detail continuing to hold.
-            ticker.setChanged();
-            ticker.sendData();
+            //
+            // VC-17: right-click withdrawal proved receivedPayments is correct server-side, but the
+            // goggle-less hover tooltip (`create.stock_ticker.contains_payments`, class
+            // com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip
+            // .StockTickerTooltipBehaviour, implements IHaveHoveringInformation — shown on plain
+            // hover, no goggles required, per javap -p -c GoggleOverlayRenderer.renderOverlay:
+            // IHaveGoggleInformation.addToGoggleTooltip is gated on GogglesItem.isWearingGoggles,
+            // IHaveHoveringInformation.addToTooltip is not) did not show it. Read with javap -p -c,
+            // StockTickerTooltipBehaviour.addToTooltip reads blockEntity.receivedPayments directly —
+            // the client's own live StockTickerBlockEntity field, not a separate synced snapshot list
+            // (newlyReceivedStockSnapshot/lastClientsideStockSnapshot are stock-summary fields, filled
+            // only by receiveStockPacket, an unrelated packet) — gated on that container being
+            // non-empty and on behaviour.mayAdministrate(viewingPlayer) (an unrelated per-network
+            // ownership permission, not a trade-origin one; right-click withdrawal only needs the
+            // weaker mayInteractMessage). javap -p -c on StockTickerBlockEntity.write(ValueOutput,
+            // boolean clientPacket) shows receivedPayments.write(output) runs unconditionally, before
+            // the `if (clientPacket)` branch that gates only ActiveLinks — so both the disk save and
+            // every client packet already carry the payment box regardless of this flag, refuting the
+            // ticket's write()-branch hypothesis. A player's own purchase
+            // (StockTickerInteractionHandler.interactWithShop, javap -p -c) calls the very same
+            // receivedPayments.insert(List) this executor calls, then StockTickerBlockEntity
+            // .broadcastPackageRequest calls this.notifyUpdate() as its own last step — the identical
+            // method StockTickerInventory.setChanged() already delegates to. VC-13's own Findings
+            // (Part 2, "Sync ruled out too") independently reached the same conclusion for the box's
+            // server-side content. Calling notifyUpdate() directly, instead of its two constituent
+            // calls, makes this executor's own sync call textually and semantically the same call
+            // Create Fly's own purchase path ends on, closing any remaining doubt that the two paths
+            // could diverge — the client-bound data itself already matches before this change
+            // (asserted by TransactionGameTest.aModDrivenUnitsPaymentIsClientSyncReady).
+            ticker.notifyUpdate();
 
             // The flag around notifyTrade is what VillagerRewardTradeXpMixin keys off of to suppress
             // vanilla's own orb spawn inside Villager.rewardTradeXp for this unit only; cleared in
