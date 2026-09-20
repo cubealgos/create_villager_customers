@@ -38,6 +38,7 @@ A minimal real shop — a table cloth with a price and an encoded request, linke
 ### `class ShoppingTripGameTest` — `src/gametest/java/villager_customers/gametest/ShoppingTripGameTest.java`
 VC-4's four acceptance-criteria game tests: a full trip and trade while in WORK, no trip at all outside WORK even with a forced roll, a shop removed mid-walk cancelling cleanly with a cooldown, and the mixin coexisting with a second, independently added WORK behaviour (`docs/spec/domains/customer.md` `CUSTOMER-REQ-001`..`009`; `ARCH-FAIL-004`; `TEST-REQ-003`).
 - `void aVillagerInWorkWalksToAMatchingShopAndTrades(GameTestHelper helper)`
+- `void aFarmerWithAComposterLeavesItForTheShop(GameTestHelper helper)` — VC-11: Kevin's client check found a real farmer, standing at its own composter job site, never leaving for a matching shop even though the trip target memory was set.
 - `void aVillagerNotInWorkAtNightDoesNotStartATripEvenWithAForcedRoll(GameTestHelper helper)`
 - `void aShopRemovedMidWalkCancelsTheTripClearsTheMemoryAndStartsCooldown(GameTestHelper helper)`
 - `void aSecondForcedRollWhileATripIsAlreadyActiveDoesNotReplaceTheTarget(GameTestHelper helper)` — VC-6 sweep gap: `CUSTOMER-REQ-008` ("at most one active trip") is implemented as an early return in CustomerHooks.onRestock but no test forced a second roll while a trip was already active — every other test has at most one shop in existence for its whole run.

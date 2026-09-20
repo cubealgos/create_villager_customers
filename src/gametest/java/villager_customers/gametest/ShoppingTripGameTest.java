@@ -10,6 +10,7 @@ import com.zurrtum.create.infrastructure.component.AutoRequestData;
 import com.zurrtum.create.infrastructure.component.PackageOrderWithCrafts;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityTypes;
@@ -17,12 +18,15 @@ import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import villager_customers.customer.CustomerHooks;
 import villager_customers.customer.CustomerMemoryModules;
@@ -90,6 +94,131 @@ public final class ShoppingTripGameTest {
                 helper.assertTrue(
                     !villager.getBrain().hasMemoryValue(CustomerMemoryModules.SHOPPING_TRIP_TARGET),
                     "the trip memory was cleared on arrival"
+                );
+            });
+        });
+    }
+
+    /**
+     * VC-11: Kevin's client check found a real farmer, standing at its own composter job site,
+     * never leaving for a matching shop even though the trip target memory was set. VC-4's own game
+     * tests (this class's other methods) never caught it because their villagers carry no profession
+     * and no job site, so vanilla's real {@code WORK} package — in particular
+     * {@code SetWalkTargetFromBlockMemory(JOB_SITE, ...)} at priority 2, which re-populates
+     * {@code WALK_TARGET} from {@code JOB_SITE} on every tick {@code WALK_TARGET} is absent — never
+     * had anything to compete against. A farmer already standing right next to its composter is the
+     * worst case: priority 2 runs before this mod's own priority-6 {@link ShoppingTripBehavior}
+     * every tick, so once anything empties {@code WALK_TARGET} mid-walk, the job site wins it back
+     * first unless the trip behaviour re-asserts its own target every tick (this ticket's fix).
+     *
+     * <p>The farmer is built by setting {@code VillagerData}'s profession directly and calling
+     * {@code refreshBrain} (which preserves memories across the rebuilt brain, confirmed via
+     * {@code javap -p -c} on {@code Villager.refreshBrain}) rather than waiting on vanilla's own
+     * {@code AssignProfessionFromJobSite}, then claiming the composter POI directly through
+     * {@code PoiManager.take} (its own entry condition, {@code VillagerProfession.heldJobSite()}, is
+     * a bare POI-type predicate with no ownership check, confirmed the same way) and setting
+     * {@code JOB_SITE} to it, rather than waiting on vanilla's own {@code AcquirePoi} — both real
+     * vanilla behaviours are timing-dependent and not this ticket's own concern.
+     *
+     * <p>The composter sits 6 blocks from the cloth and the villager spawns 2 blocks from the
+     * composter (the ticket's own Approach asked for roughly a dozen; this ticket's own game-test
+     * runs found that distance genuine pathing trouble in this harness — see the field comments
+     * below and this ticket's Findings) — short enough to stay inside every other test in this
+     * class's own proven-safe envelope, long enough that the villager crosses real ground away from
+     * its job site, which is what actually exercises the priority race this ticket fixes.
+     */
+    @GameTest(maxTicks = 500)
+    public void aFarmerWithAComposterLeavesItForTheShop(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        TestShopNetwork network = TestShopNetwork.build(helper, 20); // enough stock for exactly one unit
+        BlockPos tickerRelative = new BlockPos(1, 1, 5); // TestShopNetwork.build's own ticker position
+        BlockPos keeperRelative = tickerRelative.east(1);
+        // The cloth sits at the exact position this class's own arrival tests already prove
+        // reachable end-to-end (aVillagerInWorkWalksToAMatchingShopAndTrades and others actually
+        // complete a trade there, unlike the "shop removed mid-walk" test's z=9, which only proves
+        // movement starts before destroying the cloth mid-walk — this ticket's own game-test runs
+        // found genuine, repeatable pathing trouble finishing an arrival at z=9 and beyond, unrelated
+        // to the walk-target race this ticket fixes; a farther single-axis stretch, tried first, also
+        // let the villager wander outside the structure's own small force-loaded bounding box and
+        // freeze mid-trip — alive, but no longer ticking, WALK_TARGET stuck absent forever). The
+        // priority race this ticket fixes doesn't need a long walk to prove: it reproduced just as
+        // reliably at this distance during that same investigation.
+        BlockPos clothRelative = new BlockPos(1, 1, 7);
+        BlockPos composterRelative = new BlockPos(1, 1, 1);
+        BlockPos villagerSpawnRelative = new BlockPos(1, 2, 3); // 2 blocks from the composter; TestShopNetwork's own packager provides footing here
+
+        helper.setBlock(clothRelative, AllBlocks.ANDESITE_TABLE_CLOTH);
+        helper.setBlock(
+            keeperRelative, AllBlocks.BLAZE_BURNER.defaultBlockState().setValue(BlazeBurnerBlock.HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.SMOULDERING)
+        );
+        helper.setBlock(composterRelative, Blocks.COMPOSTER);
+
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, villagerSpawnRelative);
+
+        helper.runAfterDelay(3, () -> {
+            configureCloth(helper, clothRelative, tickerRelative);
+
+            // Set the time before refreshBrain (VC-11 finding): refreshBrain's own registerBrainGoals
+            // calls Brain.updateActivityFromSchedule once immediately, stamping its private
+            // lastScheduleUpdate at whatever the game time was at that moment. That call throttles
+            // itself to once per 20 ticks of *game time elapsed since the stamp* — not real ticks
+            // played — so setting the time afterwards (a large jump) makes the very next schedule
+            // re-check see a huge elapsed delta and fire immediately, on this behaviour's own
+            // priority-99 UpdateActivityFromSchedule slot, undoing the forced WORK the instant the
+            // schedule itself is next consulted. Setting the time first means the stamp already
+            // reflects working hours, so the schedule agrees with the forced activity instead of
+            // fighting it (confirmed by reproducing the flip with the old order, `javap -p -c` on
+            // Brain.updateActivityFromSchedule).
+            helper.setTime(2000); // working hours, as every other trip test in this class uses
+
+            BlockPos composterPos = helper.absolutePos(composterRelative);
+            // Villager.setVillagerData nulls the villager's offers whenever the profession changes
+            // (confirmed via javap -p -c on Villager.setVillagerData), so the offer is added only
+            // after the profession is set, not before.
+            villager.setVillagerData(villager.getVillagerData().withProfession(level.registryAccess(), VillagerProfession.FARMER));
+            villager.refreshBrain(level); // rebuilds WORK/CORE for FARMER; preserves memories (Brain.pack/makeBrain)
+            villager.getOffers().add(freshOffer());
+
+            level.getPoiManager().take(type -> type.is(PoiTypes.FARMER), (type, pos) -> true, composterPos, 1);
+            villager.getBrain().setMemory(MemoryModuleType.JOB_SITE, GlobalPos.of(level.dimension(), composterPos));
+
+            villager.getBrain().setActiveActivityIfPossible(Activity.WORK);
+
+            CustomerHooks.setRollSourceForTesting(() -> 0.0);
+            villager.restock();
+            CustomerHooks.resetRollSourceForTesting();
+
+            helper.assertTrue(
+                villager.getBrain().hasMemoryValue(CustomerMemoryModules.SHOPPING_TRIP_TARGET), "the forced roll set a trip target"
+            );
+            BlockPos shopPos = villager.getBrain().getMemory(CustomerMemoryModules.SHOPPING_TRIP_TARGET).orElseThrow().pos();
+
+            // succeedWhen's own Runnable is already polled every tick until success or timeout
+            // (`GameTestSequence`'s own mechanism) — the regression check (WALK_TARGET must never
+            // settle on the composter instead of the shop, the bug this ticket fixes) is folded into
+            // it directly rather than registered as a second recurring check through
+            // helper.onEachTick, which crashed the test server (a ConcurrentModificationException-
+            // shaped NPE inside GameTestInfo.tickInternal's own per-tick map iteration, whether or not
+            // it itself called helper.fail) — found by running this ticket's own game test. A one-tick
+            // gap is tolerated: the work package's own SetWalkTargetFromBlockMemory(JOB_SITE) can win
+            // the priority race before this behaviour's own re-assertion runs later the very same
+            // tick, so the memory never survives to the next tick against the composter.
+            helper.succeedWhen(() -> {
+                if (villager.getBrain().hasMemoryValue(CustomerMemoryModules.SHOPPING_TRIP_TARGET)) {
+                    var walkTarget = villager.getBrain().getMemory(MemoryModuleType.WALK_TARGET);
+                    if (walkTarget.isPresent()) {
+                        helper.assertTrue(
+                            walkTarget.get().getTarget().currentBlockPosition().equals(shopPos),
+                            "the walk target settled on the composter instead of the shop: " + walkTarget.get().getTarget().currentBlockPosition()
+                        );
+                    }
+                }
+                helper.assertTrue(
+                    TransactionGameTest.paymentBoxHolds(network.ticker, Items.EMERALD, 1),
+                    "the farmer left its composter, walked to the shop and traded: the payment box should hold one emerald"
+                );
+                helper.assertTrue(
+                    !villager.getBrain().hasMemoryValue(CustomerMemoryModules.SHOPPING_TRIP_TARGET), "the trip memory was cleared on arrival"
                 );
             });
         });

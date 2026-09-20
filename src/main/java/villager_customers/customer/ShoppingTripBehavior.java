@@ -1,8 +1,11 @@
 package villager_customers.customer;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.behavior.BlockPosTracker;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
@@ -35,11 +38,38 @@ import java.util.Optional;
  * behaviour's {@code memoriesToEraseWhenStopped} set, see {@code VillagerBrainMixin}) can already
  * have erased it by the time {@link #stop} runs for a "left WORK" cancellation, which would
  * otherwise be indistinguishable from a successful arrival that cleared it itself.
+ *
+ * <p>{@code VC-11}: {@code WALK_TARGET} is a single, shared memory slot, and vanilla's own
+ * {@code WORK} package keeps trying to write it too — {@code SetWalkTargetFromBlockMemory(JOB_SITE,
+ * ...)} at priority 2 (this mixin's own trip behaviour sits at priority 6, `VC-4`'s Findings)
+ * re-populates {@code WALK_TARGET} from {@code JOB_SITE} every tick it finds the memory absent, and
+ * {@code MoveToTargetSink} (core, priority 1) erases it outright on arrival or a failed path
+ * (confirmed for both via {@code javap -p -c} against {@code minecraft-merged-deobf-26.2.jar}). A
+ * farmer standing right at its own composter is the worst case: {@link #start} alone (the previous
+ * fix) only wins the very first tick after the memory is set — priority 2 runs first every tick, so
+ * once anything empties {@code WALK_TARGET} mid-walk, the job site refills it before this behaviour
+ * gets a chance to notice, and the villager never makes it to the shop even though the trip is still
+ * "active" by every other memory. {@link #tick} now re-asserts {@code WALK_TARGET} (and
+ * {@code LOOK_TARGET}) every tick the trip is still walking, whenever it is absent or points
+ * somewhere other than the shop, so the trip always wins the slot back.
  */
 public final class ShoppingTripBehavior extends Behavior<Villager> {
     private static final float SPEED_MODIFIER = 0.5f;
 
+    /**
+     * How many consecutive ticks this behaviour tolerates {@code CANT_REACH_WALK_TARGET_SINCE}
+     * staying present (vanilla's own "I couldn't path there" flag, set by {@code MoveToTargetSink})
+     * before giving up early rather than fighting the work package every tick until the full
+     * {@link CustomerRules#WALK_TIMEOUT_TICKS}-tick walk timeout: roughly {@code MoveToTargetSink}'s
+     * own worst-case per-attempt retry backoff ({@code MoveToTargetSink()}'s default constructor
+     * passes 150..250 ticks, confirmed via {@code javap -p -c}), doubled for margin, since one bad
+     * attempt alone is not proof the shop is genuinely unreachable (`VC-11`'s own Findings).
+     */
+    private static final int UNREACHABLE_TICK_LIMIT = 400;
+
     private boolean arrivedAndHandedOff;
+    private boolean unreachableTimedOut;
+    private int consecutiveUnreachableTicks;
 
     public ShoppingTripBehavior() {
         super(
@@ -66,14 +96,14 @@ public final class ShoppingTripBehavior extends Behavior<Villager> {
     @Override
     protected void start(ServerLevel level, Villager villager, long gameTime) {
         arrivedAndHandedOff = false;
-        villager.getBrain().getMemory(CustomerMemoryModules.SHOPPING_TRIP_TARGET).ifPresent(
-            target -> villager.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(target.pos(), SPEED_MODIFIER, CustomerRules.ARRIVAL_DISTANCE))
-        );
+        unreachableTimedOut = false;
+        consecutiveUnreachableTicks = 0;
+        villager.getBrain().getMemory(CustomerMemoryModules.SHOPPING_TRIP_TARGET).ifPresent(target -> setWalkAndLookTarget(villager, target.pos()));
     }
 
     @Override
     protected boolean canStillUse(ServerLevel level, Villager villager, long gameTime) {
-        return !arrivedAndHandedOff && isEligible(level, villager);
+        return !arrivedAndHandedOff && !unreachableTimedOut && isEligible(level, villager);
     }
 
     @Override
@@ -84,7 +114,32 @@ public final class ShoppingTripBehavior extends Behavior<Villager> {
         }
         GlobalPos target = targetOpt.get();
         if (villager.blockPosition().distManhattan(target.pos()) > CustomerRules.ARRIVAL_DISTANCE) {
-            return; // still walking
+            // Still walking (VC-11): the work package's own WALK_TARGET setters run at a lower
+            // priority number than this behaviour (SetWalkTargetFromBlockMemory(JOB_SITE) at 2 vs.
+            // this behaviour at 6, VC-4's Findings) and so are evaluated first every tick; whenever
+            // one of them — or MoveToTargetSink erasing on a failed path — has left WALK_TARGET
+            // absent or pointing anywhere but the shop, put it back before this tick ends.
+            Brain<Villager> brain = villager.getBrain();
+            boolean pointsAtShop = brain.getMemory(MemoryModuleType.WALK_TARGET)
+                .map(walkTarget -> walkTarget.getTarget().currentBlockPosition().equals(target.pos()))
+                .orElse(false);
+            if (!pointsAtShop) {
+                setWalkAndLookTarget(villager, target.pos());
+            }
+
+            // Bounded fight (VC-11): don't thrash a genuinely unreachable path every tick until the
+            // full walk timeout. CANT_REACH_WALK_TARGET_SINCE staying present for UNREACHABLE_TICK_
+            // LIMIT ticks running means MoveToTargetSink itself has kept failing to path there; give
+            // up now through the existing cancel-and-cooldown path (canStillUse, then stop) instead.
+            if (brain.hasMemoryValue(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE)) {
+                consecutiveUnreachableTicks++;
+                if (consecutiveUnreachableTicks >= UNREACHABLE_TICK_LIMIT) {
+                    unreachableTimedOut = true;
+                }
+            } else {
+                consecutiveUnreachableTicks = 0;
+            }
+            return;
         }
 
         // Arrived (CUSTOMER-REQ-005): re-check shophood live, then run every one of the villager's
@@ -100,6 +155,13 @@ public final class ShoppingTripBehavior extends Behavior<Villager> {
         arrivedAndHandedOff = true;
         villager.getBrain().eraseMemory(CustomerMemoryModules.SHOPPING_TRIP_TARGET);
         villager.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
+    }
+
+    /** Points both {@code WALK_TARGET} and {@code LOOK_TARGET} at {@code pos} (VC-11's own Approach). */
+    private static void setWalkAndLookTarget(Villager villager, BlockPos pos) {
+        Brain<Villager> brain = villager.getBrain();
+        brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(pos, SPEED_MODIFIER, CustomerRules.ARRIVAL_DISTANCE));
+        brain.setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosTracker(pos));
     }
 
     @Override
