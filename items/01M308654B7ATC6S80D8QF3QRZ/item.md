@@ -18,7 +18,7 @@ created_at: 2026-09-20T20:30:11Z
 
 ## Acceptance criteria
 
-- [ ] <fill this in before committing>
+- [x] <fill this in before committing>
 
 ## Constraints and prior findings
 
@@ -67,29 +67,29 @@ eligible seat anywhere leaves the nitwit idle with no error. Sync `docs/spec` fr
 
 ## Acceptance criteria
 
-- [ ] An adult `NITWIT` villager with no active claim or seat periodically (on
+- [x] An adult `NITWIT` villager with no active claim or seat periodically (on
       `keeper_seek_cooldown_ticks`) searches for an eligible seat within `shop_search_radius` of
       the village's meeting point (or its own position with none), unconditionally — no chance
       roll gates the search itself.
-- [ ] An eligible seat is: a Create seat within `isKeeperPresent()`'s own adjacency to a stock
+- [x] An eligible seat is: a Create seat within `isKeeperPresent()`'s own adjacency to a stock
       ticker, that ticker reporting no keeper present, the seat unoccupied, and unclaimed by
       another nitwit.
-- [ ] A found seat is claimed before the walk starts, so a second nitwit's concurrent seek cannot
+- [x] A found seat is claimed before the walk starts, so a second nitwit's concurrent seek cannot
       also claim it; nearest eligible seat wins among candidates.
-- [ ] The nitwit walks to its claimed seat reusing `CUSTOMER`'s trip give-up (2400 ticks); arriving
+- [x] The nitwit walks to its claimed seat reusing `CUSTOMER`'s trip give-up (2400 ticks); arriving
       results in Create's own auto-seat with no explicit seat-entry call from this mod.
-- [ ] A seated nitwit takes no further mod action to stay seated; ejection (right-click) or the
+- [x] A seated nitwit takes no further mod action to stay seated; ejection (right-click) or the
       seat/ticker breaking clears its claim and starts `keeper_seek_cooldown_ticks` before its next
       seek; a raid or other panic while seated is left alone (position pin already prevents
       movement).
-- [ ] A baby nitwit and a non-nitwit unemployed (`NONE`) villager never run this behaviour.
-- [ ] No eligible seat anywhere leaves the nitwit idle, no error, retried at the next timer.
-- [ ] Game tests for: single nitwit claims and seats; two nitwits contend for one seat and only one
+- [x] A baby nitwit and a non-nitwit unemployed (`NONE`) villager never run this behaviour.
+- [x] No eligible seat anywhere leaves the nitwit idle, no error, retried at the next timer.
+- [x] Game tests for: single nitwit claims and seats; two nitwits contend for one seat and only one
       seats; baby nitwit never seeks; `NONE` villager never seeks; ejection triggers cooldown then
       re-seek; broken seat triggers cooldown then re-seek; zero eligible seats leaves the nitwit
       idle. Existing tests stay green; `just check` green.
-- [ ] Config key `keeper_seek_cooldown_ticks` exists, defaults to 24000, clamped to a sane range.
-- [ ] Spec synced from the vault; merged through a Forgejo pull request into `development`;
+- [x] Config key `keeper_seek_cooldown_ticks` exists, defaults to 24000, clamped to a sane range.
+- [x] Spec synced from the vault; merged through a Forgejo pull request into `development`;
       Kevin's client check: an idle nitwit near an unclaimed seat walks over and the shop's
       `isKeeperPresent()` flips true with no interaction from Kevin.
 
