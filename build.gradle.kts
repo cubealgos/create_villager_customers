@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "villager_customers"
-version = "0.1.0+26.2"
+version = "1.0.0+26.2"
 
 repositories {
     mavenCentral()
