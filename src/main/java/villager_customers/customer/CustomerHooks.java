@@ -1,13 +1,16 @@
 package villager_customers.customer;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.trading.MerchantOffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import villager_customers.config.VillagerCustomersConfig;
 import villager_customers.model.CustomerRules;
 import villager_customers.shop.Shop;
 import villager_customers.shop.ShopSearch;
@@ -121,37 +124,54 @@ public final class CustomerHooks {
      * and {@code trip} subcommands (`VC-5`). Never mutates any state.
      */
     public static Search search(ServerLevel level, Villager villager) {
+        BlockPos origin = searchOrigin(level, villager);
+        int radius = VillagerCustomersConfig.shopSearchRadius();
         if (eligibleOffers(villager).isEmpty()) {
-            Search result = new Search(Optional.empty(), Optional.empty(), Search.Reason.NO_OFFER_WITH_USES_LEFT);
+            Search result = new Search(Optional.empty(), Optional.empty(), Search.Reason.NO_OFFER_WITH_USES_LEFT, origin, radius);
             logSearch(villager, result);
             return result;
         }
-        Optional<Shop> shop = ShopSearch.matching(
-            level, villager.blockPosition(), ShopSearch.VILLAGE_REACH, candidate -> matchingOffer(villager, candidate).isPresent()
-        );
+        Optional<Shop> shop = ShopSearch.matching(level, origin, radius, candidate -> matchingOffer(villager, candidate).isPresent());
         if (shop.isEmpty()) {
-            Search result = new Search(Optional.empty(), Optional.empty(), Search.Reason.NO_SHOP_MATCHING_OFFER);
+            Search result = new Search(Optional.empty(), Optional.empty(), Search.Reason.NO_SHOP_MATCHING_OFFER, origin, radius);
             logSearch(villager, result);
             return result;
         }
-        Search result = new Search(shop, matchingOffer(villager, shop.get()), Search.Reason.MATCH);
+        Search result = new Search(shop, matchingOffer(villager, shop.get()), Search.Reason.MATCH, origin, radius);
         logSearch(villager, result);
         return result;
+    }
+
+    /**
+     * The search origin (`CUSTOMER-REQ-003`, amended by `docs/spec/decisions/
+     * DEC-010-village-wide-shop-search.md`): {@code villager}'s remembered {@code MEETING_POINT}
+     * (the village bell) when it has one <em>in the current dimension</em>, else its own position.
+     * A meeting point in another dimension is treated the same as none — {@code GlobalPos}'s own
+     * position component is meaningless across dimensions, and nothing in this mod ever searches
+     * across one.
+     */
+    private static BlockPos searchOrigin(ServerLevel level, Villager villager) {
+        return villager.getBrain().getMemory(MemoryModuleType.MEETING_POINT)
+            .filter(meetingPoint -> meetingPoint.dimension() == level.dimension())
+            .map(GlobalPos::pos)
+            .orElseGet(villager::blockPosition);
     }
 
     /** {@code VC-14}: greppable trace of every {@link #search} result. */
     private static void logSearch(Villager villager, Search result) {
         LOGGER.info(
-            "VC14 search villager={} reason={} shop={}", villager.getUUID(), result.reason(),
-            result.shop().map(shop -> shop.pos().toShortString()).orElse("none")
+            "VC14 search villager={} reason={} shop={} origin={} radius={}", villager.getUUID(), result.reason(),
+            result.shop().map(shop -> shop.pos().toShortString()).orElse("none"), result.origin().toShortString(), result.radius()
         );
     }
 
     /**
      * The outcome of {@link #search}: a matched shop and offer ({@code reason() == MATCH}, both
-     * present), or which of the two eligibility checks failed (both empty).
+     * present), or which of the two eligibility checks failed (both empty); {@code origin} and
+     * {@code radius} are the ones this particular search actually used (`VC-18`), so
+     * {@code villager_customers.debug.DebugCommand}'s {@code search} subcommand can report them.
      */
-    public record Search(Optional<Shop> shop, Optional<MerchantOffer> offer, Reason reason) {
+    public record Search(Optional<Shop> shop, Optional<MerchantOffer> offer, Reason reason, BlockPos origin, int radius) {
         public enum Reason {
             /** A reachable shop was found matching one of the villager's eligible offers. */
             MATCH,

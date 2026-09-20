@@ -13,7 +13,11 @@ The pure decision rules behind a shopping trip (`docs/spec/domains/customer.md` 
 - `int ARRIVAL_DISTANCE` — The walk's arrival distance, in blocks (`CUSTOMER-REQ-004`).
 - `int WALK_TIMEOUT_TICKS` — The walk's own give-up timeout, in ticks (`CUSTOMER-REQ-004`).
 - `int COOLDOWN_TICKS` — The cooldown started after a cancelled or timed-out trip, in ticks (`CUSTOMER-REQ-007`).
+- `int DEFAULT_SHOP_SEARCH_RADIUS` — The default shop-search radius, in blocks horizontally from the search origin — the village's meeting point (bell) when the villager remembers one, else its own position (`CUSTOMER-REQ-003`, amended by `docs/spec/decisions/DEC-010-village-wide-shop-search.md`).
+- `int MIN_SHOP_SEARCH_RADIUS` — The lowest shop_search_radius the config accepts; smaller values clamp up to this (`DEC-010`).
+- `int MAX_SHOP_SEARCH_RADIUS` — The highest shop_search_radius the config accepts; larger values clamp down to this (`DEC-010`).
 - `boolean rolls(double random)` — Whether one roll of random — expected uniform in [0, 1), the range both Math#random() and java.util.Random#nextDouble() produce — succeeds against #CHANCE_PER_RESTOCK (`CUSTOMER-REQ-002`).
+- `int clampShopSearchRadius(int radius)` — radius clamped to [#MIN_SHOP_SEARCH_RADIUS, #MAX_SHOP_SEARCH_RADIUS] (`DEC-010`'s config clamp, applied to whatever value villager_customers.config.VillagerCustomersConfig reads from disk).
 
 ### `class MatchRule` — `src/main/java/villager_customers/model/MatchRule.java`
 Whether a villager's offer and a table cloth mirror each other (`TRANSACTION-REQ-001`, `TRANSACTION-REQ-008`; `decisions/DEC-005-one-mechanism.md`): the cloth's goods equal the offer's cost stack and the cloth's price equals the offer's result stack, and an offer whose cost has a second item never matches, regardless of the first.

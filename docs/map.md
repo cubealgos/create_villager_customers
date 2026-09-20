@@ -15,6 +15,7 @@ signature page before calling into a package you did not write.
 |---|---|---|---|
 | `villager_customers` | root | VillagerCustomers |  |
 | `villager_customers.client` | root | VillagerCustomersClient |  |
+| `villager_customers.config` | root | VillagerCustomersConfig |  |
 | `villager_customers.customer` | root | CustomerHooks, CustomerMemoryModules, CustomerRegistration, ShoppingTripBehavior |  |
 | `villager_customers.debug` | root | DebugCommand |  |
 | `villager_customers.mixin` | root | VillagerBrainMixin, VillagerRewardTradeXpMixin |  |
@@ -22,7 +23,8 @@ signature page before calling into a package you did not write.
 | `villager_customers.shop` | root | Shop, ShopPoi, ShopRegistration, ShopSearch |  |
 | `villager_customers.transaction` | root | ModDrivenTrade, ShopAccess, TransactionExecutor | The transaction: matching an offer against a shop and executing it (`docs/spec/domains/transaction.md`, `docs/spec/04-architecture.md` `ARCH-DEC-004`). |
 | `villager_customers` | root (test) | SourceSurfaceTest |  |
-| `villager_customers.gametest` | root (gametest) | ComponentPredicateGameTest, DebugCommandGameTest, RefusalGameTest, ShopPoiGameTest, ShopSearchGameTest, ShopViewGameTest, ShoppingTripGameTest, SmokeGameTest, TestShop, TestShopNetwork, TransactionGameTest |  |
+| `villager_customers.config` | root (test) | VillagerCustomersConfigTest |  |
+| `villager_customers.gametest` | root (gametest) | ComponentPredicateGameTest, DebugCommandGameTest, RefusalGameTest, ShopPoiGameTest, ShopSearchGameTest, ShopViewGameTest, ShoppingTripGameTest, SmokeGameTest, TestShop, TestShopNetwork, TransactionGameTest, VillageWideShopSearchGameTest |  |
 | `villager_customers.model` | root (test) | CustomerRulesTest, MatchRuleTest, NuggetConversionTest |  |
 
 | build script | what |

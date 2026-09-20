@@ -8,6 +8,7 @@
 .gradle/
 build/
 run/
+logs/
 .idea/
 *.iml
 __pycache__/

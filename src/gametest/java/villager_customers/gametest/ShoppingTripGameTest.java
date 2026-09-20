@@ -394,12 +394,12 @@ public final class ShoppingTripGameTest {
      * walk, standing in for a player trading it away in the meantime.
      *
      * <p>Uses a diamond/netherite-ingot shape rather than {@link #freshOffer()}'s wheat/emerald one:
-     * {@code CustomerHooks.search} runs at the full production {@code ShopSearch.VILLAGE_REACH} (48
-     * blocks), which reaches into neighbouring game-test structures, and most of this suite's shops
-     * share the wheat-for-emerald shape — a shared shape risks the villager targeting a neighbour's
-     * shop instead of this test's own nearby one and never arriving within {@code maxTicks} (found by
-     * this ticket's own `just check` run against {@code DebugCommandGameTest}'s sibling gap, not by
-     * inspection).
+     * {@code CustomerHooks.search} runs at the full production {@code shop_search_radius} (default
+     * 128 blocks, `VC-18`; 48 at the time this test was written), which reaches into neighbouring
+     * game-test structures, and most of this suite's shops share the wheat-for-emerald shape — a
+     * shared shape risks the villager targeting a neighbour's shop instead of this test's own nearby
+     * one and never arriving within {@code maxTicks} (found by this ticket's own `just check` run
+     * against {@code DebugCommandGameTest}'s sibling gap, not by inspection).
      */
     @GameTest(maxTicks = 300)
     public void anOfferExhaustedMidWalkExecutesNothingOnArrival(GameTestHelper helper) {
