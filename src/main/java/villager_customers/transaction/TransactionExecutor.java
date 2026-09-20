@@ -67,7 +67,12 @@ public final class TransactionExecutor {
 
             ItemStack goods = offer.getCostA().copy();
             ItemStack price = offer.getResult().copy();
-            int nuggetCount = NuggetConversion.nuggets(offer.getXp(), NUGGET_XP);
+            // The orb's own roll (TRANSACTION-REQ-010): vanilla's Villager.rewardTradeXp would spawn
+            // an ExperienceOrb worth exactly 3 + random.nextInt(4) xp; the mixin suppresses that orb
+            // for a mod-driven unit (VillagerRewardTradeXpMixin, gated on ModDrivenTrade below), and
+            // this is the same formula, rolled from the level's own random rather than the villager's.
+            int orbXp = 3 + level.getRandom().nextInt(4);
+            int nuggetCount = NuggetConversion.nuggets(orbXp, NUGGET_XP);
             ItemStack nuggets = nuggetCount > 0 ? new ItemStack(AllItems.EXP_NUGGET, nuggetCount) : ItemStack.EMPTY;
 
             // getAccurateSummary() (a per-tick cache, docs/spec/domains/transaction.md TRANSACTION-REQ-002)
@@ -99,7 +104,16 @@ public final class TransactionExecutor {
             }
 
             box.insert(payment);
-            villager.notifyTrade(offer); // grants trade xp and calls offer.increaseUses() itself
+            // The flag around notifyTrade is what VillagerRewardTradeXpMixin keys off of to suppress
+            // vanilla's own orb spawn inside Villager.rewardTradeXp for this unit only; cleared in
+            // `finally` so a later player trade on this same villager still drops its orb
+            // (TRANSACTION-REQ-010).
+            ModDrivenTrade.begin();
+            try {
+                villager.notifyTrade(offer); // grants trade xp and calls offer.increaseUses() itself
+            } finally {
+                ModDrivenTrade.end();
+            }
             completed++;
         }
     }

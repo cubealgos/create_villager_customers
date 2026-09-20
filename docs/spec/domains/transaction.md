@@ -59,7 +59,7 @@ what makes a table cloth count as a shop in the first place (`domains/shop.md`).
 | `TRANSACTION-REQ-007` | While an offer still has uses left and the shop can still supply a unit, the system shall repeat steps `004`–`006` for the same visit; it shall stop as soon as either runs out or a unit is refused. | Must | `00-context.md` |
 | `TRANSACTION-REQ-008` | The system shall never match an offer whose cost has a second item (`getItemCostB()` present): a table cloth's price is one item. | Must | Research §A |
 | `TRANSACTION-REQ-009` | The system shall leave `MerchantOffer.getDemand()`/`updateDemand()` and villager-player reputation untouched by a mod-driven unit. | Must | `TRANSACTION-DEC-002` |
-| `TRANSACTION-REQ-010` | When a unit completes, the system shall insert experience nuggets worth the offer's xp: the offer's xp divided by one nugget's xp value, rounded up (Create's nugget value is read at the first ticket; 3 xp in upstream Create) (Kevin, 2026-09-19; `decisions/DEC-007-xp-nuggets.md`). | Must | `decisions/DEC-007-xp-nuggets.md` |
+| `TRANSACTION-REQ-010` | When a unit completes, the system shall spawn no experience orb (vanilla's `rewardTradeXp` orb, 3 to 6 xp, is suppressed for the mod-driven unit) and shall insert experience nuggets worth that orb's roll instead: `3 + random(4)` xp divided by one nugget's 3 xp, rounded up, so one or two nuggets per unit; the villager's own levelling xp is unchanged (Kevin, 2026-09-19 and 2026-09-20; `decisions/DEC-007-xp-nuggets.md`). | Must | `decisions/DEC-007-xp-nuggets.md` |
 
 ## 6. Failure modes
 

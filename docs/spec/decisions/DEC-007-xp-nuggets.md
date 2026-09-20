@@ -26,3 +26,9 @@ typical vanilla trade, the ratio is Kevin's to set once that number is known.
 Alternative considered: scaling nugget count to the offer's `xp` field exactly. Deferred rather
 than rejected: it needs the per-nugget xp value first, which is an open question, not a design
 choice. Cost if wrong: a data constant (`contracts/public-surface.md`), not a rewrite.
+
+**Amended 2026-09-20 (Kevin, from the client check):** the nuggets carry the value of the player's
+xp orb the trade would have dropped (`3 + random(4)` xp, one or two nuggets), and that orb is
+suppressed for a mod-driven unit; the offer's levelling xp stays the villager's own. The earlier
+"offer's xp" reading over-paid (up to ten nuggets on a master trade) and doubled the xp with the
+orb. Ticket VC-12.
