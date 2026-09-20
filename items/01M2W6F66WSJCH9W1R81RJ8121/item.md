@@ -18,10 +18,10 @@ Mirror `MM-10`'s release shape exactly: bump the version in `gradle.properties`/
 
 ## Acceptance criteria
 
-- [ ] `CHANGELOG.md` carries a `1.0.0+26.2` entry.
+- [x] `CHANGELOG.md` carries a `1.0.0+26.2` entry.
 - [ ] `just release` builds the jar and checksum from a clean checkout at the tag (`REL-REQ-001`).
-- [ ] Release notes list the Minecraft, Fabric Loader and Create Fly versions tested (`REL-REQ-002`) and the default values in force for the chance per restock, the xp-nugget conversion, the walk timeout and the cooldown (`REL-REQ-003`; `contracts/public-surface.md`).
-- [ ] Security pass recorded: no network call of any kind (`COMP-REQ-001`, `SourceSurfaceTest` green), `NOTICE` credits Create Fly (CC0), Create (MIT) and Fabric (Apache-2.0), MIT `LICENSE` unchanged.
+- [x] Release notes list the Minecraft, Fabric Loader and Create Fly versions tested (`REL-REQ-002`) and the default values in force for the chance per restock, the xp-nugget conversion, the walk timeout and the cooldown (`REL-REQ-003`; `contracts/public-surface.md`).
+- [x] Security pass recorded: no network call of any kind (`COMP-REQ-001`, `SourceSurfaceTest` green), `NOTICE` credits Create Fly (CC0), Create (MIT) and Fabric (Apache-2.0), MIT `LICENSE` unchanged.
 - [ ] Release branch cut from `development`, merged into `production` through a Forgejo pull request, tagged `1.0.0+26.2`.
 - [ ] Dist jar and checksum handed to Kevin; Modrinth listing published using `VC-7`'s assets, with the five gallery shots actually taken on this release build.
 
