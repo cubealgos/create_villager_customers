@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import villager_customers.model.CustomerRules;
+import villager_customers.model.KeeperRules;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,6 +23,7 @@ class VillagerCustomersConfigTest {
     @AfterEach
     void resetInMemoryValue() {
         VillagerCustomersConfig.resetShopSearchRadiusForTesting();
+        VillagerCustomersConfig.resetNitwitBreedingChanceForTesting();
     }
 
     @Test
@@ -32,10 +34,16 @@ class VillagerCustomersConfigTest {
         VillagerCustomersConfig.load(path);
 
         assertEquals(CustomerRules.DEFAULT_SHOP_SEARCH_RADIUS, VillagerCustomersConfig.shopSearchRadius());
+        assertEquals(KeeperRules.DEFAULT_NITWIT_BREEDING_CHANCE, VillagerCustomersConfig.nitwitBreedingChance());
         assertTrue(Files.isRegularFile(path), "the file is created on first load");
         String written = Files.readString(path);
         assertTrue(written.contains("shop_search_radius=" + CustomerRules.DEFAULT_SHOP_SEARCH_RADIUS), "the written file holds the default: " + written);
         assertTrue(written.contains("shop_search_radius:"), "the written file carries a doc comment: " + written);
+        assertTrue(
+            written.contains("nitwit_breeding_chance=" + KeeperRules.DEFAULT_NITWIT_BREEDING_CHANCE),
+            "the written file holds the nitwit breeding chance default: " + written
+        );
+        assertTrue(written.contains("nitwit_breeding_chance:"), "the written file carries a doc comment for the nitwit breeding chance: " + written);
     }
 
     @Test
@@ -90,5 +98,54 @@ class VillagerCustomersConfigTest {
         VillagerCustomersConfig.load(path);
 
         assertEquals(CustomerRules.DEFAULT_SHOP_SEARCH_RADIUS, VillagerCustomersConfig.shopSearchRadius());
+        assertEquals(KeeperRules.DEFAULT_NITWIT_BREEDING_CHANCE, VillagerCustomersConfig.nitwitBreedingChance());
+    }
+
+    @Test
+    void aNitwitBreedingChanceWithinBoundsIsReadAsIs(@TempDir Path dir) throws IOException {
+        Path path = dir.resolve("villager_customers.properties");
+        Files.writeString(path, "nitwit_breeding_chance=0.25\n");
+
+        VillagerCustomersConfig.load(path);
+
+        assertEquals(0.25, VillagerCustomersConfig.nitwitBreedingChance());
+    }
+
+    @Test
+    void aNitwitBreedingChanceBelowTheMinimumIsClampedUpOnDiskToo(@TempDir Path dir) throws IOException {
+        Path path = dir.resolve("villager_customers.properties");
+        Files.writeString(path, "nitwit_breeding_chance=-0.5\n");
+
+        VillagerCustomersConfig.load(path);
+
+        assertEquals(KeeperRules.MIN_NITWIT_BREEDING_CHANCE, VillagerCustomersConfig.nitwitBreedingChance());
+        String written = Files.readString(path);
+        assertTrue(
+            written.contains("nitwit_breeding_chance=" + KeeperRules.MIN_NITWIT_BREEDING_CHANCE), "the clamped value is written back: " + written
+        );
+    }
+
+    @Test
+    void aNitwitBreedingChanceAboveTheMaximumIsClampedDownOnDiskToo(@TempDir Path dir) throws IOException {
+        Path path = dir.resolve("villager_customers.properties");
+        Files.writeString(path, "nitwit_breeding_chance=5\n");
+
+        VillagerCustomersConfig.load(path);
+
+        assertEquals(KeeperRules.MAX_NITWIT_BREEDING_CHANCE, VillagerCustomersConfig.nitwitBreedingChance());
+        String written = Files.readString(path);
+        assertTrue(
+            written.contains("nitwit_breeding_chance=" + KeeperRules.MAX_NITWIT_BREEDING_CHANCE), "the clamped value is written back: " + written
+        );
+    }
+
+    @Test
+    void aMalformedNitwitBreedingChanceFallsBackToTheDefault(@TempDir Path dir) throws IOException {
+        Path path = dir.resolve("villager_customers.properties");
+        Files.writeString(path, "nitwit_breeding_chance=not-a-number\n");
+
+        VillagerCustomersConfig.load(path);
+
+        assertEquals(KeeperRules.DEFAULT_NITWIT_BREEDING_CHANCE, VillagerCustomersConfig.nitwitBreedingChance());
     }
 }

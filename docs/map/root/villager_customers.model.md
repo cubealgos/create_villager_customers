@@ -19,6 +19,14 @@ The pure decision rules behind a shopping trip (`docs/spec/domains/customer.md` 
 - `boolean rolls(double random)` — Whether one roll of random — expected uniform in [0, 1), the range both Math#random() and java.util.Random#nextDouble() produce — succeeds against #CHANCE_PER_RESTOCK (`CUSTOMER-REQ-002`).
 - `int clampShopSearchRadius(int radius)` — radius clamped to [#MIN_SHOP_SEARCH_RADIUS, #MAX_SHOP_SEARCH_RADIUS] (`DEC-010`'s config clamp, applied to whatever value villager_customers.config.VillagerCustomersConfig reads from disk).
 
+### `class KeeperRules` — `src/main/java/villager_customers/model/KeeperRules.java`
+The pure decision rule behind whether a bred baby villager becomes a nitwit instead of vanilla's unconditional NONE (`docs/spec/domains/keeper.md` `KEEPER-REQ-001`; `docs/spec/decisions/DEC-011-nitwit-keepers.md`).
+- `double DEFAULT_NITWIT_BREEDING_CHANCE` — The default chance a bred baby becomes a nitwit, ten percent (`DEC-011`).
+- `double MIN_NITWIT_BREEDING_CHANCE` — The lowest nitwit_breeding_chance the config accepts.
+- `double MAX_NITWIT_BREEDING_CHANCE` — The highest nitwit_breeding_chance the config accepts.
+- `boolean rollsNitwit(double random, double chance)` — Whether one roll of random — expected uniform in [0, 1), the range java.util.Random#nextDouble() and RandomSource.nextDouble() both produce — succeeds against chance (`KEEPER-REQ-001`).
+- `double clampNitwitBreedingChance(double chance)` — chance clamped to [#MIN_NITWIT_BREEDING_CHANCE, #MAX_NITWIT_BREEDING_CHANCE] (`SURFACE-REQ-002`-style), applied to whatever value villager_customers.config.VillagerCustomersConfig reads from disk.
+
 ### `class MatchRule` — `src/main/java/villager_customers/model/MatchRule.java`
 Whether a villager's offer and a table cloth mirror each other (`TRANSACTION-REQ-001`, `TRANSACTION-REQ-008`; `decisions/DEC-005-one-mechanism.md`): the cloth's goods equal the offer's cost stack and the cloth's price equals the offer's result stack, and an offer whose cost has a second item never matches, regardless of the first.
 - `boolean matches(StackShape offerCost, Optional<StackShape> offerSecondCost, StackShape offerResult, List<StackShape> goods, StackShape clothPrice)` — (`TRANSACTION-REQ-008`) offerCost
