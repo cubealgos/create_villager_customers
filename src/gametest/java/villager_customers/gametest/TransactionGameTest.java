@@ -172,6 +172,75 @@ public final class TransactionGameTest {
         });
     }
 
+    /**
+     * VC-13: {@code countSpace(payment)} is only a fast pre-check — it agrees with
+     * {@code insert(payment)} bytecode-for-bytecode on a container whose content does not move
+     * between the two calls (`javap -p -c` on {@code ContainerMixin}, VC-13 Findings), so a box
+     * already too full to hold the whole payment is already caught by that pre-check and never
+     * reaches {@code insert} at all. To force the two to disagree the way a real race would — the
+     * payment box filling in between the check and the write — this test uses
+     * {@link TransactionExecutor#setBeforeInsertHookForTesting} to fill the box down to exactly one
+     * free slot right after {@code countSpace} has passed on an empty box: enough room for the
+     * price (an emerald) but not for the xp nuggets that must land with it. {@code insert} then
+     * places the emerald into the one free slot and returns the nuggets as leftover; the unit must
+     * roll the emerald back out again, touch no goods, and report {@code BOX_FULL} — proving the
+     * atomicity fix, not just its absence of a crash.
+     */
+    @GameTest(maxTicks = 200)
+    public void aBoxThatFillsBetweenTheSpaceCheckAndTheInsertRollsBackAndRefusesAtomically(GameTestHelper helper) {
+        TestShopNetwork network = TestShopNetwork.build(helper, 1); // exactly enough for one unit
+        ServerLevel level = helper.getLevel();
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
+        MerchantOffer offer = new MerchantOffer(new ItemCost(Items.WHEAT, 1), new ItemStack(Items.EMERALD, 1), 1, OFFER_XP, 0.0f);
+        ShopAccess shop = new TestShop(
+            List.of(new ItemStack(Items.WHEAT, 1)), new ItemStack(Items.EMERALD, 1), network.ticker, network.chestPos
+        );
+
+        helper.runAfterDelay(2, () -> {
+            TransactionExecutor.setBeforeInsertHookForTesting(() -> fillPaymentBoxLeavingOneFreeSlot(network.ticker));
+            TransactionExecutor.Result result;
+            try {
+                result = TransactionExecutor.execute(level, villager, offer, shop);
+            } finally {
+                TransactionExecutor.resetBeforeInsertHookForTesting();
+            }
+
+            helper.assertTrue(result.unitsCompleted() == 0, "no unit completed: " + result);
+            helper.assertTrue(result.reason() == TransactionExecutor.Result.Reason.BOX_FULL, "refused as box full: " + result);
+            helper.assertTrue(offer.getUses() == 0, "the offer's uses are untouched: " + offer.getUses());
+            helper.assertTrue(villager.getVillagerXp() == 0, "no trade xp was granted: " + villager.getVillagerXp());
+            helper.assertTrue(chestWheatCount(network) == 1, "the wheat never left the chest: " + chestWheatCount(network));
+            helper.assertTrue(itemCount(network.ticker, Items.EMERALD) == 0, "the rolled-back emerald did not stay in the box");
+            helper.assertTrue(itemCount(network.ticker, AllItems.EXP_NUGGET) == 0, "no xp nugget ever landed in the box");
+            helper.assertTrue(
+                freeSlotCount(network.ticker) == 1, "the box is exactly as the hook left it: still one free slot, nothing else moved"
+            );
+
+            helper.succeed();
+        });
+    }
+
+    /** Fills every slot but the last of {@code ticker}'s payment box with an unrelated stack. */
+    private static void fillPaymentBoxLeavingOneFreeSlot(StockTickerBlockEntity ticker) {
+        var box = ticker.receivedPayments;
+        int size = box.getContainerSize();
+        for (int slot = 0; slot < size - 1; slot++) {
+            box.setItem(slot, new ItemStack(Items.COBBLESTONE, 64));
+        }
+        box.setItem(size - 1, ItemStack.EMPTY);
+    }
+
+    private static int freeSlotCount(StockTickerBlockEntity ticker) {
+        var box = ticker.receivedPayments;
+        int free = 0;
+        for (int slot = 0; slot < box.getContainerSize(); slot++) {
+            if (box.getItem(slot).isEmpty()) {
+                free++;
+            }
+        }
+        return free;
+    }
+
     static int chestWheatCount(TestShopNetwork network) {
         ItemStack stack = network.chest.getItem(0);
         return stack.is(Items.WHEAT) ? stack.getCount() : 0;
