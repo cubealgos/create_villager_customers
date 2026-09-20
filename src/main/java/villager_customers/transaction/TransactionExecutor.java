@@ -46,6 +46,18 @@ public final class TransactionExecutor {
      */
     private static final int NUGGET_XP = 3;
 
+    /**
+     * Test-only seam (`VC-13`): invoked once, right after {@code countSpace(payment)} has passed
+     * and before {@code insert(payment)} runs, so a game test can force the box's real content to
+     * change in between — exactly the race {@code countSpace}'s own pre-check cannot see coming,
+     * since a filled-in-advance box is already caught by that pre-check itself (confirmed by
+     * `javap -p -c` on `ContainerMixin`: {@code countSpace(List)} and {@code insert(List)} run the
+     * same slot-major, entry-minor bin-packing algorithm, so they only disagree when the box's
+     * content moves between the two calls). A no-op in production.
+     */
+    private static Runnable beforeInsertHookForTesting = () -> {
+    };
+
     private TransactionExecutor() {
     }
 
@@ -95,15 +107,47 @@ public final class TransactionExecutor {
                 return new Result(completed, Result.Reason.BOX_FULL);
             }
 
+            // VC-13: a unit is atomic — the payment lands before the goods ever leave the network,
+            // and it lands in full or not at all. countSpace(payment) above is only a fast
+            // pre-check; box.insert(payment)'s own returned leftovers are the ground truth, since
+            // the box's real content can move between the two calls (another unit of this same
+            // visit, or a different customer villager's own unit, landing first) even though the
+            // two methods agree, bytecode-for-bytecode, on a container whose content does not move
+            // in between (VC-13 Findings). Any leftover means the box did not, after all, take the
+            // whole payment: pull back out exactly what did land — via ContainerExtension.extract,
+            // matched the same way ContainerExtension.matches itself matches slot contents — before
+            // the goods are ever touched, and refuse the unit as BOX_FULL.
+            beforeInsertHookForTesting.run();
+            List<ItemStack> leftover = box.insert(payment);
+            if (!leftover.isEmpty()) {
+                List<ItemStack> landed = landedStacks(box, payment, leftover);
+                if (!landed.isEmpty()) {
+                    box.extract(landed);
+                }
+                return new Result(completed, Result.Reason.BOX_FULL);
+            }
+
             if (!drawFromNetwork(level, ticker, goods)) {
-                // The summary said the network had enough; a concurrent draw within the same tick
-                // (or a stale summary) left less than promised. drawFromNetwork has already put back
-                // everything it did manage to draw, so nothing has been inserted into the box, and
-                // nothing already drawn is lost.
+                // The full payment already landed for a unit whose goods could not, after all, be
+                // drawn in full (a stale summary, or a concurrent draw within the same tick, exactly
+                // as drawFromNetwork's own rollback already accounts for on the goods side): take
+                // the payment back out before refusing, so a short draw never leaves an unearned
+                // payment sitting in the box (VC-13). Every stack in `payment` landed in full (the
+                // leftover check above already returned otherwise), so the whole list comes back out.
+                box.extract(payment);
                 return new Result(completed, Result.Reason.STOCK_TOO_LOW);
             }
 
-            box.insert(payment);
+            // box.insert(payment) above already ran Create Fly's own ContainerMixin default, which
+            // calls setChanged() on any successful placement — StockTickerInventory.setChanged()
+            // chains straight into StockTickerBlockEntity.notifyUpdate() (setChanged() + sendData(),
+            // confirmed via javap -p -c on SyncedBlockEntity) — so the box is already marked dirty
+            // and synced to nearby clients by this point. Called again here regardless (VC-13's own
+            // Approach): cheap, and it keeps this unit's own persistence and sync from silently
+            // depending on that Create Fly implementation detail continuing to hold.
+            ticker.setChanged();
+            ticker.sendData();
+
             // The flag around notifyTrade is what VillagerRewardTradeXpMixin keys off of to suppress
             // vanilla's own orb spawn inside Villager.rewardTradeXp for this unit only; cleared in
             // `finally` so a later player trade on this same villager still drops its orb
@@ -198,6 +242,42 @@ public final class TransactionExecutor {
 
     private static StackShape shapeOf(ItemStack stack) {
         return new StackShape(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), stack.getCount());
+    }
+
+    /**
+     * What of {@code attempted} actually landed in {@code box}, given the {@code leftover} list
+     * {@code box.insert(attempted)} itself returned (`VC-13`): each attempted stack's count, minus
+     * however much of it came back as leftover, matched the same way {@link ContainerExtension}
+     * itself matches slot contents ({@code box.matches}). A stack that landed in full is excluded
+     * from {@code leftover} entirely by {@code insert}'s own contract, so this only ever reduces an
+     * attempted stack's count, never inflates it.
+     */
+    private static List<ItemStack> landedStacks(ContainerExtension box, List<ItemStack> attempted, List<ItemStack> leftover) {
+        List<ItemStack> landed = new ArrayList<>(attempted.size());
+        for (ItemStack original : attempted) {
+            int leftoverCount = 0;
+            for (ItemStack stack : leftover) {
+                if (box.matches(original, stack)) {
+                    leftoverCount += stack.getCount();
+                }
+            }
+            int landedCount = original.getCount() - leftoverCount;
+            if (landedCount > 0) {
+                landed.add(original.copyWithCount(landedCount));
+            }
+        }
+        return landed;
+    }
+
+    /** Test-only: forces {@link #beforeInsertHookForTesting} (`VC-13`). */
+    public static void setBeforeInsertHookForTesting(Runnable hook) {
+        beforeInsertHookForTesting = hook;
+    }
+
+    /** Test-only: restores the production no-op hook. */
+    public static void resetBeforeInsertHookForTesting() {
+        beforeInsertHookForTesting = () -> {
+        };
     }
 
     /** How a call to {@link #execute} ended: units completed and why it stopped (`TRANSACTION-REQ-007`). */

@@ -2,6 +2,8 @@ package villager_customers.gametest;
 
 import com.zurrtum.create.AllBlocks;
 import com.zurrtum.create.content.logistics.BigItemStack;
+import com.zurrtum.create.content.logistics.packagerLink.LogisticallyLinkedBehaviour;
+import com.zurrtum.create.content.logistics.stockTicker.StockTickerBlockEntity;
 import com.zurrtum.create.content.logistics.tableCloth.TableClothBlockEntity;
 import com.zurrtum.create.content.processing.burner.BlazeBurnerBlock;
 import com.zurrtum.create.infrastructure.component.AutoRequestData;
@@ -16,12 +18,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.level.block.Blocks;
 import villager_customers.shop.Shop;
 import villager_customers.transaction.ShopAccess;
 import villager_customers.transaction.TransactionExecutor;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * A minimal real shop — a table cloth with a price and an encoded request, linked to a stock
@@ -135,6 +139,78 @@ public final class ShopViewGameTest {
                 result.unitsCompleted() == 1,
                 "one unit completed against a real network through Shop as ShopAccess: " + result
             );
+            helper.succeed();
+        });
+    }
+
+    /**
+     * VC-13 Findings: on the production path, {@code ShoppingTripBehavior} calls {@code Shop.at}
+     * fresh at arrival, never reusing a {@code Shop}/ticker resolved earlier at search time — so a
+     * chunk unload/reload of the ticker's own chunk during a long walk (which would swap in a brand
+     * new {@code StockTickerBlockEntity} instance) cannot leave the trade paying into a stale,
+     * orphaned box. This test proves that survives a real block-entity replacement rather than just
+     * reading the source: it resolves {@code Shop.at} once ("search time"), removes and re-places
+     * the stock ticker with the same block state (forcing a new instance, the same effect a chunk
+     * reload has), re-links the new instance to the same network frequency, resolves {@code Shop.at}
+     * again ("arrival time") and confirms it is a genuinely different ticker instance, then runs a
+     * transaction against that fresh resolution and asserts the payment lands in the ticker that is
+     * actually standing at that position now — not the one search time saw.
+     */
+    @GameTest(maxTicks = 200)
+    public void aTransactionResolvedAfterTheTickerIsReplacedPaysTheNewInstance(GameTestHelper helper) {
+        TestShopNetwork network = TestShopNetwork.build(helper, 20); // enough stock for exactly one unit
+        BlockPos tickerRelative = new BlockPos(1, 1, 5); // TestShopNetwork.build's own ticker position
+        BlockPos clothRelative = new BlockPos(1, 1, 7);
+        BlockPos keeperRelative = tickerRelative.east(1);
+
+        helper.setBlock(clothRelative, AllBlocks.ANDESITE_TABLE_CLOTH);
+        helper.setBlock(keeperRelative, AllBlocks.BLAZE_BURNER.defaultBlockState().setValue(BlazeBurnerBlock.HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.SMOULDERING));
+
+        ServerLevel level = helper.getLevel();
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
+        MerchantOffer offer = new MerchantOffer(new ItemCost(Items.WHEAT, 20), new ItemStack(Items.EMERALD, 1), 2, 10, 0.0f);
+
+        helper.runAfterDelay(2, () -> {
+            BlockPos clothPos = helper.absolutePos(clothRelative);
+            TableClothBlockEntity cloth = helper.getBlockEntity(clothRelative, TableClothBlockEntity.class);
+            cloth.priceTag.setFilter(new ItemStack(Items.EMERALD));
+            cloth.priceTag.count = 1;
+            cloth.requestData = new AutoRequestData(
+                PackageOrderWithCrafts.simple(List.of(new BigItemStack(new ItemStack(Items.WHEAT), 20))),
+                "",
+                network.ticker.getBlockPos().subtract(clothPos),
+                "",
+                true
+            );
+
+            // "Search time": the trip is planned against the ticker that exists right now.
+            Shop searchTimeShop = Shop.at(level, clothPos).orElseThrow();
+            StockTickerBlockEntity searchTimeTicker = searchTimeShop.ticker();
+            UUID freqId = searchTimeTicker.behaviour.freqId;
+
+            // Whatever replaces the block entity between search and arrival (a chunk unload/reload
+            // being the real-world case) — removing and re-placing with the same state forces a
+            // brand-new StockTickerBlockEntity instance at the same position; re-link it to the same
+            // network the way lazyTick() would on its own.
+            helper.setBlock(tickerRelative, Blocks.AIR.defaultBlockState());
+            helper.setBlock(tickerRelative, AllBlocks.STOCK_TICKER.defaultBlockState());
+            StockTickerBlockEntity newTicker = helper.getBlockEntity(tickerRelative, StockTickerBlockEntity.class);
+            newTicker.behaviour.freqId = freqId;
+            LogisticallyLinkedBehaviour.keepAlive(newTicker.behaviour);
+            helper.assertTrue(newTicker != searchTimeTicker, "the ticker really was replaced by a new instance");
+
+            // "Arrival time": production's own ShoppingTripBehavior resolves Shop.at fresh here,
+            // never reusing the search-time Shop or ticker (VC-13 Findings) — this test does the same.
+            Shop arrivalTimeShop = Shop.at(level, clothPos).orElseThrow();
+            helper.assertTrue(arrivalTimeShop.ticker() == newTicker, "the fresh resolution picks up the new ticker instance");
+
+            TransactionExecutor.Result result = TransactionExecutor.execute(level, villager, offer, arrivalTimeShop);
+            helper.assertTrue(result.unitsCompleted() == 1, "one unit completed against the replaced ticker: " + result);
+            helper.assertTrue(
+                TransactionGameTest.paymentBoxHolds(newTicker, Items.EMERALD, 1),
+                "the payment landed in the ticker that is actually standing at that position now"
+            );
+
             helper.succeed();
         });
     }
