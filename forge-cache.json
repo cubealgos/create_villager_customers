@@ -1,7 +1,17 @@
 {
   "pulls": {
-    "at": 1789873915.878847,
+    "at": 1789879275.565158,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "bugfix/vc-11-trip-wins-over-work",
+        "index": "11",
+        "state": "merged",
+        "title": "fix(villager_customers): the shopping trip keeps its walk target against the work package until arrival (VC-11)",
+        "updated": "2026-09-20T03:12:06Z"
+      },
       {
         "author": "scheeren",
         "base": "development",
