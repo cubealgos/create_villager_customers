@@ -39,8 +39,9 @@ a time.
 ### What it does
 
 - **A villager decides to go shopping.** During its working hours, each time its offers restock
-  it has a 50% chance of deciding to wander to a shop at all. On success it searches its village
-  for a table-cloth shop that mirrors one of its offers and walks there.
+  it has a 50% chance of deciding to wander to a shop at all. On success it searches its whole
+  village, out to 128 blocks from the village's own meeting point, for a table-cloth shop that
+  mirrors one of its offers and walks there.
 - **It executes its own offer, against the shop.** On arrival, the price goes into the linked
   stock ticker's payment box and the goods come straight out of the shop's network stock — one
   act, the same direction the villager's trade already ran. Nothing about the villager's trade
@@ -49,9 +50,13 @@ a time.
   box as experience nuggets, on top of the villager's usual trade xp.
 - **Nearest shop wins.** If more than one shop in the village matches, the villager walks to the
   closest one.
+- **Nitwits become shopkeepers.** A share of bred baby villagers are born nitwits — the one
+  villager your economy has no other use for. A grown nitwit walks to a free seat next to a stock
+  ticker that has no keeper yet and sits there to keep it, using the same village-wide search; if
+  none is free it just behaves like a normal nitwit.
 - **Nothing else about villagers changes.** Panicking, sleeping, playing, raiding and every other
-  vanilla activity are untouched; a village with no matching shop behaves exactly as before this
-  mod is installed.
+  vanilla activity are untouched; a village with no matching shop or free ticker seat behaves
+  exactly as before this mod is installed.
 
 ### Setting up a shop for villagers
 
@@ -65,10 +70,17 @@ fills it exactly as a player's checkout would.
 No new screen, no new block and no new item of its own: you read what happened through Create
 Fly's own stock ticker and payment-box views, exactly as before this mod is installed.
 
+### Known issues
+
+Create Fly's own stock ticker never renders its payments tooltip after a purchase — for a
+player's own purchase either, not just a villager's. This is an upstream gap this mod cannot fix
+from outside it: the payment is sitting in the box regardless, and a right-click withdraws it.
+
 ### Privacy
 
 Nothing leaves your machine. No telemetry, no update checks, no network calls of its own. The
-only state this mod keeps of its own is two small memory values per villager.
+only state this mod keeps of its own is a handful of small memory values per villager: two for a
+shopping trip, two more for a nitwit's keeper seek.
 
 ### Requirements
 
