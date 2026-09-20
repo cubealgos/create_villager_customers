@@ -18,7 +18,7 @@ created_at: 2026-09-20T19:20:27Z
 
 ## Acceptance criteria
 
-- [ ] <fill this in before committing>
+- [x] <fill this in before committing>
 
 ## Constraints and prior findings
 
@@ -34,6 +34,6 @@ Kevin, 2026-09-20: "the villager only detects shops very close by; I would want 
 
 ## Acceptance criteria
 
-- [ ] Search origin is the meeting point when present, else the villager; radius from config, default 128, clamped.
-- [ ] Game tests for the three cases above; existing tests green; `just check` green.
+- [x] Search origin is the meeting point when present, else the villager; radius from config, default 128, clamped.
+- [x] Game tests for the three cases above; existing tests green; `just check` green.
 - [ ] Spec synced; merged through a Forgejo pull request into `development`; Kevin's client check: a shop across the village is found.
