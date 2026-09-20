@@ -44,6 +44,7 @@ files as follows; a section marked *out of scope* says why in the file that woul
 | `domains/customer.md` | `CUSTOMER` | written |
 | `domains/transaction.md` | `TRANSACTION` | written |
 | `domains/shop.md` | `SHOP` | written |
+| `domains/keeper.md` | `KEEPER` | written |
 | `contracts/platform-matrix.md` | `PLATFORM` | written |
 | `contracts/public-surface.md` | `SURFACE` | written |
 | `contracts/data-contract.md` | `DATA` | written |
@@ -100,6 +101,7 @@ verify at the first ticket" where it appears.
 | `DEC-008` | Shops are found through a point-of-interest registration over table cloth block states | written |
 | `DEC-009` | A random chance per restock decides whether a villager goes shopping; default 50% proposed | written |
 | `DEC-010` | Shops are found across the whole village: 128 blocks from the meeting point, config `shop_search_radius` | written |
+| `DEC-011` | Nitwit villagers become shopkeepers: a 10% breeding chance, autonomous seat-seeking when adult | written |
 
 ## Open questions gathered
 
@@ -109,3 +111,9 @@ matching shop wins, nuggets equal to the offer's xp over a nugget's value rounde
 open is technical and belongs to the first tickets: the exact call that draws goods from the
 network stock, the `PoiType` registration API and block state set, vanilla's POI search reach, the
 `WORK` priority slot and memory sets for the mixin, and a nugget's xp value in Create Fly.
+`DEC-011` (2026-09-20) added its own: whether a nitwit ever reaches `Activity.WORK` at all (its
+seek behaviour is proposed for `Activity.IDLE` instead, `04-architecture.md` `ARCH-DEC-006`),
+whether vanilla's own `PoiManager` reservation ticket can be reused for seat claims,
+`keeper_seek_cooldown_ticks`' proposed 24000-tick default, and — recorded only as a later idea, not
+a requirement — whether a customer villager should ever prefer a nitwit-seated shop over any other
+keeper-satisfying seat (`domains/keeper.md` §7).

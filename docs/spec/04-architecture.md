@@ -99,6 +99,47 @@ written to the world save, and no config file exists beyond the data constants
 this shape do not round-trip a save/load the way vanilla's do, a villager could resume mid-trip
 after a restart in a way this design did not check.
 
+## `ARCH-DEC-006` — the nitwit keeper-seek behaviour, in `Activity.IDLE`, not `Activity.WORK`
+
+A second `Behavior<Villager>`, added through the same mixin as `ARCH-DEC-002` but gated to
+profession `NITWIT` and adult age (`domains/keeper.md` `KEEPER-REQ-004`). It is proposed for
+`Activity.IDLE` rather than `WORK`: `VillagerProfession.NITWIT` registers `PoiType.NONE` for both
+`heldJobSite` and `acquirableJobSite` (research §G.3), so `AcquirePoi`'s predicate can structurally
+never match and a nitwit can never hold a job site — it is not confirmed by the research pass
+whether vanilla's own schedule ever grants `Activity.WORK` to a villager with no held job site at
+all. `IDLE` is the safer default until this is checked.
+
+Unlike `CUSTOMER-REQ-002`'s chance-gated restock roll, the seek itself is unconditional once its
+own timer elapses (`domains/keeper.md` `KEEPER-DEC-002`): only seat availability gates it. Seating
+needs no call of this mod's own — `SetWalkTargetFromBlockMemory` onto the claimed seat's position
+is enough, since `SeatBlock.onEntityMovement` auto-seats any `LivingEntity` that steps onto it, with
+no profession or species check (research §G.1, §G.2) — the same walk-target pattern `CUSTOMER`
+already exercises against table cloths, pointed at a seat block instead.
+
+**To verify at the first ticket:** whether a nitwit ever reaches `Activity.WORK` at all; and
+whether vanilla's own `PoiManager` take/free reservation ticket — already used to stop two
+villagers claiming one job site or bed — can be reused for seat claims by POI-registering eligible
+seats, rather than a claim structure of this mod's own (`domains/keeper.md` `KEEPER-REQ-007`).
+**Cost if wrong:** moving the behaviour from `IDLE` to `WORK` (or vice versa) is a one-line change
+to the `Activity` argument in `Brain.addActivity`, not a redesign.
+
+## `ARCH-DEC-007` — the breeding roll, a mixin on `Villager.finalizeSpawn`'s `BREEDING` branch
+
+`Villager.finalizeSpawn(ServerLevelAccessor, DifficultyInstance, EntitySpawnReason,
+SpawnGroupData)` sets a bred baby's profession to `NONE` unconditionally (research §G.3). The
+mixin injects into that branch, rolls `nitwit_breeding_chance`, and on success calls the public
+`setVillagerData(getVillagerData().withProfession(registryAccess, VillagerProfession.NITWIT))`
+instead — the only mixin point research confirmed exists for this; a grow-up-time roll was
+considered and rejected for lacking any confirmed hook (`domains/keeper.md` `KEEPER-DEC-001`).
+`STRUCTURE`-spawned villagers (worldgen's own nitwit templates) are untouched (`KEEPER-REQ-002`).
+
+## New config keys (`contracts/public-surface.md`)
+
+| Key | Default | Governs |
+|---|---|---|
+| `nitwit_breeding_chance` | 0.10 | `ARCH-DEC-007`; `domains/keeper.md` `KEEPER-REQ-001` |
+| `keeper_seek_cooldown_ticks` | 24000 (one vanilla day, proposed, to confirm) | `ARCH-DEC-006`; every wait in `domains/keeper.md` `KEEPER-DEC-003` |
+
 ## Runtime topology (sheet §3.1)
 
 The mod runs inside the Minecraft client and server processes; no process, daemon or file of its

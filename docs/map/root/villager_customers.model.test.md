@@ -13,6 +13,17 @@ The chance roll given a fixed random source (`docs/spec/operations/testing.md`'s
 - `void aRadiusBelowTheMinimumClampsUp()`
 - `void aRadiusAboveTheMaximumClampsDown()`
 
+### `class KeeperRulesTest` — `src/test/java/villager_customers/model/KeeperRulesTest.java`
+The nitwit breeding roll given a fixed random source (`docs/spec/operations/testing.md`'s "chance roll given a fixed random source"; `docs/spec/domains/keeper.md` `KEEPER-REQ-001`), and the nitwit_breeding_chance clamp (`docs/spec/decisions/DEC-011-nitwit-keepers.md`).
+- `void rollsBelowTheChanceSucceed()`
+- `void rollsAtOrAboveTheChanceFail()`
+- `void aChanceOfOneAlwaysSucceeds()`
+- `void aChanceOfZeroNeverSucceeds()`
+- `void theDefaultChanceIsStatisticallyBoundedOverManyRolls()` — The default chance (10%) is bounded over a large, seeded sample — mirrors what the game test suite proves end-to-end against the real mixin (`VC-19`'s Approach: "a statistical test over 200 spawns with a seeded random"), done here instead as a pure unit test since the roll itself needs no Minecraft class at all.
+- `void aChanceWithinBoundsPassesThroughUnchanged()`
+- `void aChanceBelowTheMinimumClampsUp()`
+- `void aChanceAboveTheMaximumClampsDown()`
+
 ### `class MatchRuleTest` — `src/test/java/villager_customers/model/MatchRuleTest.java`
 `TRANSACTION-REQ-001`, `TRANSACTION-REQ-008`.
 - `void goodsEqualToCostAndPriceEqualToResultMatches()`

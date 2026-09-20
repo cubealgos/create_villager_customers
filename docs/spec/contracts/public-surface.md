@@ -14,6 +14,8 @@ category: "create_villager_customers"
 | Data constant: xp-nugget conversion | 1.0 | `decisions/DEC-007-xp-nuggets.md`; overridable |
 | Data constant: walk timeout, close-enough and too-far distances | 1.0 | `domains/customer.md` `CUSTOMER-REQ-004`; overridable |
 | Data constant: per-villager cooldown | 1.0 | `domains/customer.md` `CUSTOMER-REQ-007`; overridable |
+| Data constant: `nitwit_breeding_chance` | 1.0 | `decisions/DEC-011-nitwit-keepers.md`; `domains/keeper.md` `KEEPER-REQ-001`; default 0.10, overridable |
+| Data constant: `keeper_seek_cooldown_ticks` | 1.0 | `domains/keeper.md` `KEEPER-REQ-004`, `KEEPER-DEC-003`; default 24000 (proposed), overridable |
 | Translation keys, if any (none at 1.0: no screen, no tooltip, no item of this mod's own) | 1.0 | N/A — see `00-context.md` "What it will not do" |
 
 Not public: the mixin targets and injection points (`04-architecture.md`), the memory module ids

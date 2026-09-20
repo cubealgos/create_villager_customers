@@ -14,4 +14,8 @@ VillagerCustomersConfig#load(Path) against a real file in a temp directory — n
 - `void aValueAboveTheMaximumIsClampedDownOnDiskToo(Path dir)`
 - `void aMalformedValueFallsBackToTheDefault(Path dir)`
 - `void aMissingKeyFallsBackToTheDefault(Path dir)`
+- `void aNitwitBreedingChanceWithinBoundsIsReadAsIs(Path dir)`
+- `void aNitwitBreedingChanceBelowTheMinimumIsClampedUpOnDiskToo(Path dir)`
+- `void aNitwitBreedingChanceAboveTheMaximumIsClampedDownOnDiskToo(Path dir)`
+- `void aMalformedNitwitBreedingChanceFallsBackToTheDefault(Path dir)`
 
