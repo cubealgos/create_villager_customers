@@ -149,8 +149,12 @@ public final class CustomerHooks {
      * A meeting point in another dimension is treated the same as none — {@code GlobalPos}'s own
      * position component is meaningless across dimensions, and nothing in this mod ever searches
      * across one.
+     *
+     * <p>Public: {@code villager_customers.keeper.KeeperHooks} reuses this exact origin resolution
+     * for its own seat search (`KEEPER-REQ-005`: "the same origin and radius as `domains/shop.md`'s
+     * search"), rather than duplicating it.
      */
-    private static BlockPos searchOrigin(ServerLevel level, Villager villager) {
+    public static BlockPos searchOrigin(ServerLevel level, Villager villager) {
         return villager.getBrain().getMemory(MemoryModuleType.MEETING_POINT)
             .filter(meetingPoint -> meetingPoint.dimension() == level.dimension())
             .map(GlobalPos::pos)

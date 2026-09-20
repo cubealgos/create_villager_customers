@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import villager_customers.model.CustomerRules;
+import villager_customers.model.KeeperRules;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,6 +23,7 @@ class VillagerCustomersConfigTest {
     @AfterEach
     void resetInMemoryValue() {
         VillagerCustomersConfig.resetShopSearchRadiusForTesting();
+        VillagerCustomersConfig.resetKeeperSeekCooldownTicksForTesting();
     }
 
     @Test
@@ -32,10 +34,64 @@ class VillagerCustomersConfigTest {
         VillagerCustomersConfig.load(path);
 
         assertEquals(CustomerRules.DEFAULT_SHOP_SEARCH_RADIUS, VillagerCustomersConfig.shopSearchRadius());
+        assertEquals(KeeperRules.DEFAULT_SEEK_COOLDOWN_TICKS, VillagerCustomersConfig.keeperSeekCooldownTicks());
         assertTrue(Files.isRegularFile(path), "the file is created on first load");
         String written = Files.readString(path);
         assertTrue(written.contains("shop_search_radius=" + CustomerRules.DEFAULT_SHOP_SEARCH_RADIUS), "the written file holds the default: " + written);
         assertTrue(written.contains("shop_search_radius:"), "the written file carries a doc comment: " + written);
+        assertTrue(
+            written.contains("keeper_seek_cooldown_ticks=" + KeeperRules.DEFAULT_SEEK_COOLDOWN_TICKS),
+            "the written file holds the keeper cooldown default: " + written
+        );
+        assertTrue(written.contains("keeper_seek_cooldown_ticks:"), "the written file carries a doc comment for the keeper cooldown: " + written);
+    }
+
+    @Test
+    void aKeeperCooldownWithinBoundsIsReadAsIs(@TempDir Path dir) throws IOException {
+        Path path = dir.resolve("villager_customers.properties");
+        Files.writeString(path, "keeper_seek_cooldown_ticks=5000\n");
+
+        VillagerCustomersConfig.load(path);
+
+        assertEquals(5000, VillagerCustomersConfig.keeperSeekCooldownTicks());
+    }
+
+    @Test
+    void aKeeperCooldownBelowTheMinimumIsClampedUpOnDiskToo(@TempDir Path dir) throws IOException {
+        Path path = dir.resolve("villager_customers.properties");
+        Files.writeString(path, "keeper_seek_cooldown_ticks=1\n");
+
+        VillagerCustomersConfig.load(path);
+
+        assertEquals(KeeperRules.MIN_SEEK_COOLDOWN_TICKS, VillagerCustomersConfig.keeperSeekCooldownTicks());
+        String written = Files.readString(path);
+        assertTrue(
+            written.contains("keeper_seek_cooldown_ticks=" + KeeperRules.MIN_SEEK_COOLDOWN_TICKS), "the clamped value is written back: " + written
+        );
+    }
+
+    @Test
+    void aKeeperCooldownAboveTheMaximumIsClampedDownOnDiskToo(@TempDir Path dir) throws IOException {
+        Path path = dir.resolve("villager_customers.properties");
+        Files.writeString(path, "keeper_seek_cooldown_ticks=999999\n");
+
+        VillagerCustomersConfig.load(path);
+
+        assertEquals(KeeperRules.MAX_SEEK_COOLDOWN_TICKS, VillagerCustomersConfig.keeperSeekCooldownTicks());
+        String written = Files.readString(path);
+        assertTrue(
+            written.contains("keeper_seek_cooldown_ticks=" + KeeperRules.MAX_SEEK_COOLDOWN_TICKS), "the clamped value is written back: " + written
+        );
+    }
+
+    @Test
+    void aMalformedKeeperCooldownFallsBackToTheDefault(@TempDir Path dir) throws IOException {
+        Path path = dir.resolve("villager_customers.properties");
+        Files.writeString(path, "keeper_seek_cooldown_ticks=not-a-number\n");
+
+        VillagerCustomersConfig.load(path);
+
+        assertEquals(KeeperRules.DEFAULT_SEEK_COOLDOWN_TICKS, VillagerCustomersConfig.keeperSeekCooldownTicks());
     }
 
     @Test

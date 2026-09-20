@@ -16,7 +16,8 @@
       "villager_customers.gametest.ShoppingTripGameTest",
       "villager_customers.gametest.DebugCommandGameTest",
       "villager_customers.gametest.ComponentPredicateGameTest",
-      "villager_customers.gametest.VillageWideShopSearchGameTest"
+      "villager_customers.gametest.VillageWideShopSearchGameTest",
+      "villager_customers.gametest.KeeperSeekGameTest"
     ]
   },
   "depends": {

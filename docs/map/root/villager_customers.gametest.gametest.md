@@ -21,6 +21,16 @@ VC-5's three acceptance-criteria game tests for villager_customers.debug.DebugCo
 - `void boxListsEveryNonEmptyStackInTheTickersPaymentBox(GameTestHelper helper)` — VC-14: a real ticker with an emerald inserted straight into its payment box.
 - `void shopPrintsTheResolvedShopForARealCloth(GameTestHelper helper)` — VC-14: a cloth built with TestShopNetwork, the same real shop the other tests trade against.
 
+### `class KeeperSeekGameTest` — `src/gametest/java/villager_customers/gametest/KeeperSeekGameTest.java`
+`VC-20`'s seven acceptance-criteria game tests for the nitwit keeper seek (`docs/spec/domains/keeper.md` `KEEPER-REQ-003`..`013`): a single adult nitwit claims and seats itself at an eligible seat; two adult nitwits contend for one seat and only one seats; a baby nitwit never seeks; a non-nitwit unemployed villager never seeks; ejection starts the cooldown and the nitwit re-seeks once it elapses; a broken seat unseats it the same way; and no eligible seat anywhere leaves the nitwit idle with no error.
+- `void anAdultNitwitClaimsAndSeatsAtAnEligibleSeat(GameTestHelper helper)`
+- `void twoNitwitsContendForOneSeatOnlyOneSeats(GameTestHelper helper)`
+- `void aBabyNitwitNeverSeeks(GameTestHelper helper)`
+- `void aNonNitwitUnemployedVillagerNeverSeeks(GameTestHelper helper)`
+- `void ejectionStartsTheCooldownThenTheNitwitReSeeks(GameTestHelper helper)`
+- `void aBrokenSeatUnseatsTheNitwitTheSameWayAsEjection(GameTestHelper helper)`
+- `void noEligibleSeatAnywhereLeavesTheNitwitIdleWithNoError(GameTestHelper helper)`
+
 ### `class RefusalGameTest` — `src/gametest/java/villager_customers/gametest/RefusalGameTest.java`
 VC-3: the three ways a unit is refused before anything moves — insufficient network stock, a full payment box, and an offer that never matches at all (`docs/spec/domains/transaction.md` `TRANSACTION-FAIL-001`, `TRANSACTION-FAIL-002`, `TRANSACTION-FAIL-003`).
 - `void stockTooLowRefusesTheUnitAndMovesNothing(GameTestHelper helper)`

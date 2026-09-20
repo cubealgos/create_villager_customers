@@ -11,6 +11,7 @@ The restock hook villager_customers.mixin.VillagerBrainMixin calls (`docs/spec/d
 - `List<MerchantOffer> eligibleOffers(Villager villager)` — Every offer of villager's that still has uses left, in trade order (`CUSTOMER-REQ-003`, `009`).
 - `Optional<MerchantOffer> matchingOffer(Villager villager, Shop shop)` — The first of villager's eligible offers (see #eligibleOffers) that matches shop, if any.
 - `Search search(ServerLevel level, Villager villager)` — The same eligible-offer, nearest-shop search #onRestock runs (`CUSTOMER-REQ-003`, `009`), exposed read-only for villager_customers.debug.DebugCommand's search and trip subcommands (`VC-5`).
+- `BlockPos searchOrigin(ServerLevel level, Villager villager)` — The search origin (`CUSTOMER-REQ-003`, amended by `docs/spec/decisions/ DEC-010-village-wide-shop-search.md`): villager's remembered MEETING_POINT (the village bell) when it has one in the current dimension, else its own position.
 - `void forceNextRoll(UUID villagerId)` — Test/dev-only: forces the next #onRestock roll to succeed for one villager, consumed once (`VC-5`).
 - `boolean hasForcedRoll(UUID villagerId)` — Test/dev-only: whether a forced roll is still pending for a villager (`VC-5`'s game test accessor).
 - `void setRollSourceForTesting(DoubleSupplier source)` — Test-only: forces the next roll(s)' source.

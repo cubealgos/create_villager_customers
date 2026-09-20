@@ -19,6 +19,13 @@ The pure decision rules behind a shopping trip (`docs/spec/domains/customer.md` 
 - `boolean rolls(double random)` — Whether one roll of random — expected uniform in [0, 1), the range both Math#random() and java.util.Random#nextDouble() produce — succeeds against #CHANCE_PER_RESTOCK (`CUSTOMER-REQ-002`).
 - `int clampShopSearchRadius(int radius)` — radius clamped to [#MIN_SHOP_SEARCH_RADIUS, #MAX_SHOP_SEARCH_RADIUS] (`DEC-010`'s config clamp, applied to whatever value villager_customers.config.VillagerCustomersConfig reads from disk).
 
+### `class KeeperRules` — `src/main/java/villager_customers/model/KeeperRules.java`
+The pure constants behind a nitwit keeper's seek cadence (`docs/spec/domains/keeper.md` `KEEPER-REQ-004`; `KEEPER-DEC-003`).
+- `int DEFAULT_SEEK_COOLDOWN_TICKS` — The default keeper_seek_cooldown_ticks: one vanilla day, matching CUSTOMER's own daily restock cadence (`KEEPER-DEC-003`).
+- `int MIN_SEEK_COOLDOWN_TICKS` — The lowest keeper_seek_cooldown_ticks the config accepts; smaller values clamp up to this.
+- `int MAX_SEEK_COOLDOWN_TICKS` — The highest keeper_seek_cooldown_ticks the config accepts; larger values clamp down to this.
+- `int clampSeekCooldownTicks(int ticks)` — ticks clamped to [#MIN_SEEK_COOLDOWN_TICKS, #MAX_SEEK_COOLDOWN_TICKS], the same clamp shape CustomerRules#clampShopSearchRadius(int) already uses for shop_search_radius.
+
 ### `class MatchRule` — `src/main/java/villager_customers/model/MatchRule.java`
 Whether a villager's offer and a table cloth mirror each other (`TRANSACTION-REQ-001`, `TRANSACTION-REQ-008`; `decisions/DEC-005-one-mechanism.md`): the cloth's goods equal the offer's cost stack and the cloth's price equals the offer's result stack, and an offer whose cost has a second item never matches, regardless of the first.
 - `boolean matches(StackShape offerCost, Optional<StackShape> offerSecondCost, StackShape offerResult, List<StackShape> goods, StackShape clothPrice)` — (`TRANSACTION-REQ-008`) offerCost

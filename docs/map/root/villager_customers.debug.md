@@ -6,11 +6,12 @@ Every type with its summary and every non-private constructor, method and consta
 signature is the contract; read the source only when the summary is not enough.
 
 ### `class DebugCommand` — `src/main/java/villager_customers/debug/DebugCommand.java`
-Development-only: /villager_customers debug forces, inspects or fully runs one villager's shopping trip against villager_customers.customer's real restock hook and search (`docs/spec/operations/testing.md`'s "Development tool" row, `docs/spec/domains/customer.md` §3; `VC-5`).
+Development-only: /villager_customers debug forces, inspects or fully runs one villager's shopping trip against villager_customers.customer's real restock hook and search, or reports a nitwit's keeper state (`docs/spec/domains/keeper.md`, `VC-20`) (`docs/spec/operations/testing.md`'s "Development tool" row, `docs/spec/domains/customer.md` §3; `VC-5`).
 - `void register()`
 - `int roll(CommandSourceStack source, Villager villager)`
 - `int search(CommandSourceStack source, Villager villager)`
 - `int trip(CommandSourceStack source, Villager villager)`
 - `int box(CommandSourceStack source, BlockPos pos)` — VC-14: prints every non-empty stack in the stock ticker's payment box at pos, or that pos is not a stock ticker at all — server-side, for Kevin's live payment-box bug hunt (`docs/spec` has no requirement of its own for this: dev tooling only).
 - `int shop(CommandSourceStack source, BlockPos pos)` — VC-14: prints what Shop#at resolves for the table cloth at pos — its ticker position, keeper presence, price and goods — reconstructing Shop#at's own checks one at a time (no block entity, not a cloth, no request, empty price, no ticker, no keeper) so a non-match still says which one failed first.
+- `int keeper(CommandSourceStack source, Villager villager)` — VC-20: prints villager's own keeper state — whether it is an adult nitwit at all, whether it is currently seated, its claimed seat if any, and its cooldown game time if any (`docs/spec/domains/keeper.md`) — server-side, mirroring box/shop's own literal-text style (dynamic content, not a fixed message).
 

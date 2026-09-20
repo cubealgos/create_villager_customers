@@ -25,6 +25,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import villager_customers.VillagerCustomers;
 import villager_customers.customer.CustomerHooks;
 import villager_customers.customer.CustomerMemoryModules;
+import villager_customers.keeper.KeeperHooks;
 import villager_customers.shop.Shop;
 
 import java.util.ArrayList;
@@ -34,7 +35,8 @@ import java.util.stream.Collectors;
 /**
  * Development-only: {@code /villager_customers debug <roll|search|trip|box|shop> <...>} forces,
  * inspects or fully runs one villager's shopping trip against {@code villager_customers.customer}'s
- * real restock hook and search (`docs/spec/operations/testing.md`'s "Development tool" row,
+ * real restock hook and search, or reports a nitwit's keeper state (`docs/spec/domains/keeper.md`,
+ * `VC-20`) (`docs/spec/operations/testing.md`'s "Development tool" row,
  * `docs/spec/domains/customer.md` §3; `VC-5`). {@code roll} forces the next restock chance roll to
  * succeed; {@code search} runs the same eligible-offer, nearest-shop search read-only and prints the
  * result; {@code trip} skips the roll, runs the search, remembers the target and — forcing
@@ -42,8 +44,10 @@ import java.util.stream.Collectors;
  * behaviour walk it there and trade, for screenshots and manual behaviour checks. {@code box}
  * (`VC-14`) prints every non-empty stack in the stock ticker's payment box at a position; {@code
  * shop} (`VC-14`) prints what {@link Shop#at} resolves for a table cloth at a position, or the first
- * reason it does not count as a shop — both for Kevin's live payment-box bug hunt. Registered only
- * when Fabric reports a development environment; never present in a released jar.
+ * reason it does not count as a shop — both for Kevin's live payment-box bug hunt. {@code keeper}
+ * (`VC-20`) prints one villager's own keeper state: whether it is an adult nitwit at all, whether
+ * it is currently seated, its claimed seat if any, and its cooldown game time if any. Registered
+ * only when Fabric reports a development environment; never present in a released jar.
  */
 public final class DebugCommand {
     private static final SimpleCommandExceptionType NOT_A_VILLAGER =
@@ -64,7 +68,9 @@ public final class DebugCommand {
                 .then(Commands.literal("box").then(Commands.argument("pos", BlockPosArgument.blockPos())
                     .executes(c -> box(c.getSource(), BlockPosArgument.getBlockPos(c, "pos")))))
                 .then(Commands.literal("shop").then(Commands.argument("pos", BlockPosArgument.blockPos())
-                    .executes(c -> shop(c.getSource(), BlockPosArgument.getBlockPos(c, "pos"))))))));
+                    .executes(c -> shop(c.getSource(), BlockPosArgument.getBlockPos(c, "pos")))))
+                .then(Commands.literal("keeper").then(Commands.argument("villager", EntityArgument.entity())
+                    .executes(c -> keeper(c.getSource(), villagerOf(c))))))));
     }
 
     private static Villager villagerOf(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -157,6 +163,22 @@ public final class DebugCommand {
             .map(big -> formatStack(big.stack.copyWithCount(big.count)))
             .collect(Collectors.joining(", "));
         String text = posText + ": shop -- ticker " + tickerPos.toShortString() + ", keeper present, price " + priceText + ", goods " + goodsText;
+        source.sendSuccess(() -> Component.literal(text), false);
+        return 1;
+    }
+
+    /**
+     * {@code VC-20}: prints {@code villager}'s own keeper state — whether it is an adult nitwit at
+     * all, whether it is currently seated, its claimed seat if any, and its cooldown game time if
+     * any (`docs/spec/domains/keeper.md`) — server-side, mirroring {@code box}/{@code shop}'s own
+     * literal-text style (dynamic content, not a fixed message).
+     */
+    static int keeper(CommandSourceStack source, Villager villager) {
+        ServerLevel level = source.getLevel();
+        KeeperHooks.KeeperState state = KeeperHooks.state(level, villager);
+        String text = villager.getUUID() + ": adultNitwit=" + state.adultNitwit() + ", seated=" + state.seated() + ", claimedSeat="
+            + state.claimedSeat().map(pos -> pos.pos().toShortString()).orElse("none") + ", cooldownGameTime="
+            + state.cooldownGameTime().map(String::valueOf).orElse("none") + " (now=" + level.getGameTime() + ")";
         source.sendSuccess(() -> Component.literal(text), false);
         return 1;
     }
