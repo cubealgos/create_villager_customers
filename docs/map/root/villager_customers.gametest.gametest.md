@@ -5,6 +5,12 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class ComponentPredicateGameTest` — `src/gametest/java/villager_customers/gametest/ComponentPredicateGameTest.java`
+`VC-15`: the match honours the offer's cost predicate — `ItemCost.components`, a DataComponentExactPredicate — on top of the plain (item id, count) shape match, and the per-unit draw only ever takes stock that satisfies it (`docs/spec/domains/transaction.md` `TRANSACTION-REQ-011`; `create_firearms` `decisions/DEC-016-villager-customers-requirement.md`).
+- `void anOfferWithAComponentPredicateMatchesAGoodsStackThatSatisfiesIt(GameTestHelper helper)`
+- `void anOfferWithAComponentPredicateRefusesAGoodsStackThatDoesNotSatisfyIt(GameTestHelper helper)`
+- `void aUnitDrawsOnlyTheGoodsStackThatSatisfiesTheOffersComponentPredicate(GameTestHelper helper)` — Two sources in the same network hold two differently-named paper stacks; the shop's configured goods is the one that satisfies the offer's predicate.
+
 ### `class DebugCommandGameTest` — `src/gametest/java/villager_customers/gametest/DebugCommandGameTest.java`
 VC-5's three acceptance-criteria game tests for villager_customers.debug.DebugCommand, run in the game test environment, which is itself a development environment (`FabricLoader.isDevelopmentEnvironment()` is true under runGameTest, exactly as it is under runClient), so the command is registered and reachable here.
 - `void searchPrintsAMatchAgainstARealShop(GameTestHelper helper)`
@@ -58,7 +64,9 @@ A minimal ShopAccess built directly in the game test, standing in for VC-2's own
 ### `class TestShopNetwork` — `src/gametest/java/villager_customers/gametest/TestShopNetwork.java`
 A small, real Create Fly logistics network for the transaction game tests: a chest, a packager targeting it, a stock link bound to the packager, and a stock ticker on the same frequency (`docs/spec/domains/transaction.md`).
 - `TestShopNetwork build(GameTestHelper helper, int wheatCount)` — Builds the network with wheatCount wheat already in the chest (0 for an empty chest).
+- `TestShopNetwork build(GameTestHelper helper, ItemStack stack)` — Builds the network with stack already in the chest (`VC-15`: a component-bearing stack, not just wheat, so a game test can prove the draw honours an offer's cost predicate).
 - `TwoSourceNetwork buildTwoSources(GameTestHelper helper, int wheatEach)` — Builds a network with two chest-and-packager sources on the same frequency, each with wheatEach wheat, sharing one stock ticker (VC-3 review: proving a short draw returns every stack to its own origin container, not just one).
+- `TwoSourceNetwork buildTwoSources(GameTestHelper helper, ItemStack stackA, ItemStack stackB)` — Builds a network with two chest-and-packager sources on the same frequency, one holding stackA and the other stackB (`VC-15`: two component-bearing variants of the same item, proving a draw takes only the one satisfying an offer's cost predicate and leaves the other untouched).
 - `void setWheat(int wheatCount)` — Replaces the chest's single wheat stack (0 empties it).
 - `void fillPaymentBoxWithJunk()` — Fills every slot of the payment box with an unrelated full stack, leaving it no room at all.
 - `void fillPaymentBoxWithJunk(StockTickerBlockEntity ticker)`

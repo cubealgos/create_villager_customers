@@ -23,7 +23,7 @@ The minimal, read-only view of a table-cloth shop that TransactionExecutor needs
 ### `class TransactionExecutor` — `src/main/java/villager_customers/transaction/TransactionExecutor.java`
 Runs the per-unit loop that executes a matched offer against a shop (`docs/spec/domains/transaction.md` `TRANSACTION-REQ-002`..`TRANSACTION-REQ-007`; `decisions/DEC-006-direct-draw.md`).
 - `Result execute(ServerLevel level, AbstractVillager villager, MerchantOffer offer, ShopAccess shop)` — Executes as many units of offer against shop as the offer's uses and the shop's stock and payment box allow, stopping at the first refusal (`TRANSACTION-REQ-007`).
-- `boolean matches(MerchantOffer offer, ShopAccess shop)` — Whether offer and shop mirror each other (`TRANSACTION-REQ-001`), exposed public for VC-4's restock search, which needs the same match rule this executor uses to test an offer against a candidate shop before remembering it as a trip target (`docs/spec/domains/customer.md` `CUSTOMER-REQ-003`).
+- `boolean matches(MerchantOffer offer, ShopAccess shop)` — Whether offer and shop mirror each other (`TRANSACTION-REQ-001`, and, on top of the pure shape match, `TRANSACTION-REQ-011`), exposed public for VC-4's restock search, which needs the same match rule this executor uses to test an offer against a candidate shop before remembering it as a trip target (`docs/spec/domains/customer.md` `CUSTOMER-REQ-003`).
 - `void setBeforeInsertHookForTesting(Runnable hook)` — Test-only: forces #beforeInsertHookForTesting (`VC-13`).
 - `void resetBeforeInsertHookForTesting()` — Test-only: restores the production no-op hook.
 
