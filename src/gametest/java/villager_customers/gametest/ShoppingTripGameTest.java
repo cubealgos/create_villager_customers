@@ -68,13 +68,20 @@ public final class ShoppingTripGameTest {
         );
 
         Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 3)); // 4 blocks from the cloth
-        villager.getOffers().add(freshOffer());
+        BlockPos composterRelative = new BlockPos(1, 1, 1); // employAsFarmer's own convention, shared with the farmer test below
 
         helper.runAfterDelay(3, () -> {
             configureCloth(helper, clothRelative, tickerRelative);
 
+            // VC-21: WORK now keeps vanilla's own JOB_SITE requirement, so a plain job-siteless
+            // villager can no longer be forced into WORK at all -- employ it first, the same way
+            // aFarmerWithAComposterLeavesItForTheShop already does.
             helper.setTime(2000);
+            helper.setBlock(composterRelative, Blocks.COMPOSTER);
+            employAsFarmer(helper, level, villager, helper.absolutePos(composterRelative));
+            villager.getOffers().add(freshOffer()); // setVillagerData (inside employAsFarmer) nulls offers
             villager.getBrain().setActiveActivityIfPossible(Activity.WORK);
+            helper.assertTrue(villager.getBrain().isActive(Activity.WORK), "the employed villager entered WORK");
 
             CustomerHooks.setRollSourceForTesting(() -> 0.0);
             villager.restock();
@@ -111,14 +118,10 @@ public final class ShoppingTripGameTest {
      * every tick, so once anything empties {@code WALK_TARGET} mid-walk, the job site wins it back
      * first unless the trip behaviour re-asserts its own target every tick (this ticket's fix).
      *
-     * <p>The farmer is built by setting {@code VillagerData}'s profession directly and calling
-     * {@code refreshBrain} (which preserves memories across the rebuilt brain, confirmed via
-     * {@code javap -p -c} on {@code Villager.refreshBrain}) rather than waiting on vanilla's own
-     * {@code AssignProfessionFromJobSite}, then claiming the composter POI directly through
-     * {@code PoiManager.take} (its own entry condition, {@code VillagerProfession.heldJobSite()}, is
-     * a bare POI-type predicate with no ownership check, confirmed the same way) and setting
-     * {@code JOB_SITE} to it, rather than waiting on vanilla's own {@code AcquirePoi} — both real
-     * vanilla behaviours are timing-dependent and not this ticket's own concern.
+     * <p>The farmer is built by {@link #employAsFarmer} (this ticket's own helper, since reused by
+     * `VC-21`'s own tests: {@code Activity.WORK} keeps vanilla's own {@code JOB_SITE
+     * VALUE_PRESENT} requirement since that ticket's fix, so every test that forces a villager into
+     * {@code WORK} needs a real job site now, not just this one).
      *
      * <p>The composter sits 6 blocks from the cloth and the villager spawns 2 blocks from the
      * composter (the ticket's own Approach asked for roughly a dozen; this ticket's own game-test
@@ -158,31 +161,16 @@ public final class ShoppingTripGameTest {
         helper.runAfterDelay(3, () -> {
             configureCloth(helper, clothRelative, tickerRelative);
 
-            // Set the time before refreshBrain (VC-11 finding): refreshBrain's own registerBrainGoals
-            // calls Brain.updateActivityFromSchedule once immediately, stamping its private
-            // lastScheduleUpdate at whatever the game time was at that moment. That call throttles
-            // itself to once per 20 ticks of *game time elapsed since the stamp* — not real ticks
-            // played — so setting the time afterwards (a large jump) makes the very next schedule
-            // re-check see a huge elapsed delta and fire immediately, on this behaviour's own
-            // priority-99 UpdateActivityFromSchedule slot, undoing the forced WORK the instant the
-            // schedule itself is next consulted. Setting the time first means the stamp already
-            // reflects working hours, so the schedule agrees with the forced activity instead of
-            // fighting it (confirmed by reproducing the flip with the old order, `javap -p -c` on
-            // Brain.updateActivityFromSchedule).
+            // Set the time before employAsFarmer (VC-11 finding, see that method's own Javadoc for
+            // why the order matters).
             helper.setTime(2000); // working hours, as every other trip test in this class uses
 
             BlockPos composterPos = helper.absolutePos(composterRelative);
-            // Villager.setVillagerData nulls the villager's offers whenever the profession changes
-            // (confirmed via javap -p -c on Villager.setVillagerData), so the offer is added only
-            // after the profession is set, not before.
-            villager.setVillagerData(villager.getVillagerData().withProfession(level.registryAccess(), VillagerProfession.FARMER));
-            villager.refreshBrain(level); // rebuilds WORK/CORE for FARMER; preserves memories (Brain.pack/makeBrain)
-            villager.getOffers().add(freshOffer());
-
-            level.getPoiManager().take(type -> type.is(PoiTypes.FARMER), (type, pos) -> true, composterPos, 1);
-            villager.getBrain().setMemory(MemoryModuleType.JOB_SITE, GlobalPos.of(level.dimension(), composterPos));
+            employAsFarmer(helper, level, villager, composterPos);
+            villager.getOffers().add(freshOffer()); // setVillagerData (inside employAsFarmer) nulls offers
 
             villager.getBrain().setActiveActivityIfPossible(Activity.WORK);
+            helper.assertTrue(villager.getBrain().isActive(Activity.WORK), "the employed farmer entered WORK");
 
             CustomerHooks.setRollSourceForTesting(() -> 0.0);
             villager.restock();
@@ -278,14 +266,18 @@ public final class ShoppingTripGameTest {
         );
 
         Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
-        villager.getOffers().add(freshOffer());
         Vec3 spawnPos = villager.position();
+        BlockPos composterRelative = new BlockPos(0, 1, 1); // free of TestShopNetwork's own footprint and of clothRelative
 
         helper.runAfterDelay(3, () -> {
             configureCloth(helper, clothRelative, tickerRelative);
 
             helper.setTime(2000);
+            helper.setBlock(composterRelative, Blocks.COMPOSTER);
+            employAsFarmer(helper, level, villager, helper.absolutePos(composterRelative));
+            villager.getOffers().add(freshOffer()); // setVillagerData (inside employAsFarmer) nulls offers
             villager.getBrain().setActiveActivityIfPossible(Activity.WORK);
+            helper.assertTrue(villager.getBrain().isActive(Activity.WORK), "the employed villager entered WORK");
 
             CustomerHooks.setRollSourceForTesting(() -> 0.0);
             villager.restock();
@@ -327,6 +319,7 @@ public final class ShoppingTripGameTest {
      */
     @GameTest
     public void aSecondForcedRollWhileATripIsAlreadyActiveDoesNotReplaceTheTarget(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
         BlockPos farClothRelative = new BlockPos(1, 1, 7);
         BlockPos farTickerRelative = farClothRelative.east(2);
         BlockPos farKeeperRelative = farTickerRelative.south();
@@ -341,13 +334,17 @@ public final class ShoppingTripGameTest {
         );
 
         Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
-        villager.getOffers().add(freshOffer());
+        BlockPos composterRelative = new BlockPos(0, 1, 1); // free of both shops' own footprints
 
         helper.runAfterDelay(3, () -> {
             configureCloth(helper, farClothRelative, farTickerRelative);
 
             helper.setTime(2000);
+            helper.setBlock(composterRelative, Blocks.COMPOSTER);
+            employAsFarmer(helper, level, villager, helper.absolutePos(composterRelative));
+            villager.getOffers().add(freshOffer()); // setVillagerData (inside employAsFarmer) nulls offers
             villager.getBrain().setActiveActivityIfPossible(Activity.WORK);
+            helper.assertTrue(villager.getBrain().isActive(Activity.WORK), "the employed villager entered WORK");
 
             CustomerHooks.setRollSourceForTesting(() -> 0.0);
             villager.restock();
@@ -403,10 +400,12 @@ public final class ShoppingTripGameTest {
      */
     @GameTest(maxTicks = 300)
     public void anOfferExhaustedMidWalkExecutesNothingOnArrival(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
         TestShopNetwork network = TestShopNetwork.build(helper, 20);
         BlockPos tickerRelative = new BlockPos(1, 1, 5); // TestShopNetwork.build's own ticker position
         BlockPos keeperRelative = tickerRelative.east(1);
         BlockPos clothRelative = new BlockPos(1, 1, 7);
+        BlockPos composterRelative = new BlockPos(1, 1, 1); // employAsFarmer's own convention, shared with the tests above
 
         helper.setBlock(clothRelative, AllBlocks.ANDESITE_TABLE_CLOTH);
         helper.setBlock(
@@ -415,7 +414,6 @@ public final class ShoppingTripGameTest {
 
         Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 3)); // 4 blocks from the cloth
         MerchantOffer offer = new MerchantOffer(new ItemCost(Items.DIAMOND, 5), new ItemStack(Items.NETHERITE_INGOT, 1), 2, 10, 0.0f);
-        villager.getOffers().add(offer);
 
         helper.runAfterDelay(3, () -> {
             BlockPos clothPos = helper.absolutePos(clothRelative);
@@ -428,7 +426,11 @@ public final class ShoppingTripGameTest {
             );
 
             helper.setTime(2000);
+            helper.setBlock(composterRelative, Blocks.COMPOSTER);
+            employAsFarmer(helper, level, villager, helper.absolutePos(composterRelative));
+            villager.getOffers().add(offer); // setVillagerData (inside employAsFarmer) nulls offers
             villager.getBrain().setActiveActivityIfPossible(Activity.WORK);
+            helper.assertTrue(villager.getBrain().isActive(Activity.WORK), "the employed villager entered WORK");
 
             CustomerHooks.setRollSourceForTesting(() -> 0.0);
             villager.restock();
@@ -513,6 +515,43 @@ public final class ShoppingTripGameTest {
         });
     }
 
+    /**
+     * `VC-21`'s own acceptance criterion, stated directly: a job-siteless villager can never be
+     * forced into {@code Activity.WORK} at all, and an employed one still can. {@code
+     * Brain.activityRequirementsAreMet} (confirmed via {@code javap -p -c}) returns {@code false}
+     * whenever {@code activityRequirements} holds no entry, or an unmet one, for the activity; before
+     * this ticket's fix, {@code VillagerBrainMixin}'s own re-registration of {@code WORK} replaced
+     * vanilla's {@code JOB_SITE VALUE_PRESENT} entry with an empty one, which — per that same method
+     * — is vacuously met (an empty {@code Set}'s iterator never finds a failing condition), so
+     * {@code setActiveActivityIfPossible(Activity.WORK)} always succeeded regardless of job site.
+     * This test would have failed against that bug (the job-siteless villager would have entered
+     * {@code WORK}) and passes against the fix.
+     */
+    @GameTest
+    public void aJobSitelessVillagerNeverEntersWorkButAnEmployedOneDoes(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos composterRelative = new BlockPos(1, 1, 1);
+
+        Villager jobSiteless = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 3));
+        Villager employed = helper.spawn(EntityTypes.VILLAGER, new BlockPos(3, 2, 3));
+
+        helper.runAfterDelay(3, () -> {
+            helper.setTime(2000);
+
+            jobSiteless.getBrain().setActiveActivityIfPossible(Activity.WORK);
+            helper.assertTrue(
+                !jobSiteless.getBrain().isActive(Activity.WORK), "a job-siteless villager never enters WORK, matching vanilla"
+            );
+
+            helper.setBlock(composterRelative, Blocks.COMPOSTER);
+            employAsFarmer(helper, level, employed, helper.absolutePos(composterRelative));
+            employed.getBrain().setActiveActivityIfPossible(Activity.WORK);
+            helper.assertTrue(employed.getBrain().isActive(Activity.WORK), "an employed villager with a JOB_SITE still enters WORK");
+
+            helper.succeed();
+        });
+    }
+
     private static void configureCloth(GameTestHelper helper, BlockPos clothRelative, BlockPos tickerRelative) {
         BlockPos clothPos = helper.absolutePos(clothRelative);
         BlockPos tickerPos = helper.absolutePos(tickerRelative);
@@ -526,6 +565,39 @@ public final class ShoppingTripGameTest {
 
     private static MerchantOffer freshOffer() {
         return new MerchantOffer(new ItemCost(Items.WHEAT, 20), new ItemStack(Items.EMERALD, 1), 2, 10, 0.0f);
+    }
+
+    /**
+     * Employs {@code villager} as a {@code FARMER} with the composter at {@code composterPos} (which
+     * must already exist as a block — a POI record only exists for a real one) as its real
+     * {@code JOB_SITE} (`VC-21`): sets its profession, rebuilds its brain (which nulls its offers —
+     * callers must re-add them afterwards), claims the composter POI directly through
+     * {@code PoiManager.take} (its own entry condition, {@code VillagerProfession.heldJobSite()}, is
+     * a bare POI-type predicate with no ownership check, confirmed via {@code javap -p -c}) and sets
+     * {@code JOB_SITE} to it — rather than waiting on vanilla's own
+     * {@code AssignProfessionFromJobSite}/{@code AcquirePoi}, both timing-dependent and not any of
+     * these tests' own concern.
+     *
+     * <p>Needed since `VC-21`'s own fix: {@code Activity.WORK} now keeps vanilla's own
+     * {@code JOB_SITE VALUE_PRESENT} requirement (`CUSTOMER-REQ-001`), so a job-siteless villager can
+     * never enter {@code WORK} at all any more, forced or not — {@code VC-4}'s original convention of
+     * a bare, profession-less test villager relied on the bug that ticket fixed. Package-private:
+     * {@code DebugCommandGameTest}'s own {@code trip} test needs an employed villager for the same
+     * reason and reuses this rather than duplicating it.
+     *
+     * <p>Callers must call {@link GameTestHelper#setTime} <em>before</em> this method, not after (the
+     * `VC-11` finding {@link #aFarmerWithAComposterLeavesItForTheShop} first documented):
+     * {@code refreshBrain}'s own {@code registerBrainGoals} call stamps the brain's private
+     * {@code lastScheduleUpdate} at whatever the game time is at that moment, and the schedule only
+     * re-checks itself once 20 game-time ticks have then elapsed — setting the time afterwards makes
+     * the very next check see a huge elapsed delta and fire immediately, undoing a forced
+     * {@code WORK} the instant the schedule is next consulted.
+     */
+    static void employAsFarmer(GameTestHelper helper, ServerLevel level, Villager villager, BlockPos composterPos) {
+        villager.setVillagerData(villager.getVillagerData().withProfession(level.registryAccess(), VillagerProfession.FARMER));
+        villager.refreshBrain(level); // rebuilds WORK/CORE for FARMER; preserves memories (Brain.pack/makeBrain)
+        level.getPoiManager().take(type -> type.is(PoiTypes.FARMER), (type, pos) -> true, composterPos, 1);
+        villager.getBrain().setMemory(MemoryModuleType.JOB_SITE, GlobalPos.of(level.dimension(), composterPos));
     }
 
     @SuppressWarnings("unchecked")

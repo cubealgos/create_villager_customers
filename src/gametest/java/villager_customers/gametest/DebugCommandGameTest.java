@@ -24,6 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec2;
 import villager_customers.customer.CustomerHooks;
 import villager_customers.customer.CustomerMemoryModules;
@@ -170,6 +171,7 @@ public final class DebugCommandGameTest {
         BlockPos tickerRelative = new BlockPos(1, 1, 5);
         BlockPos keeperRelative = tickerRelative.east(1);
         BlockPos clothRelative = new BlockPos(1, 1, 7);
+        BlockPos composterRelative = new BlockPos(1, 1, 1); // ShoppingTripGameTest.employAsFarmer's own convention
 
         helper.setBlock(clothRelative, AllBlocks.ANDESITE_TABLE_CLOTH);
         helper.setBlock(
@@ -177,16 +179,23 @@ public final class DebugCommandGameTest {
         );
 
         Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 3));
-        villager.getOffers().add(freshOffer());
 
         helper.runAfterDelay(3, () -> {
             configureCloth(helper, clothRelative, tickerRelative);
             helper.setTime(2000);
 
-            // Deliberately never set an active activity here: this mod's mock villagers have no
-            // profession or job site, so nothing but an explicit setActiveActivityIfPossible call
-            // (ShoppingTripGameTest's own pattern) ever puts one into WORK — the trip command is the
-            // only thing that does so below, proving CUSTOMER-REQ-001's "forced" claim for real.
+            // VC-21: WORK now keeps vanilla's own JOB_SITE requirement, so the villager needs a real
+            // job site before the trip command's own setActiveActivityIfPossible call (below, inside
+            // DebugCommand.trip) can succeed at all -- employment alone does not activate WORK, so
+            // the "starts outside WORK" assertion just below still holds.
+            helper.setBlock(composterRelative, Blocks.COMPOSTER);
+            ShoppingTripGameTest.employAsFarmer(helper, level, villager, helper.absolutePos(composterRelative));
+            villager.getOffers().add(freshOffer()); // setVillagerData (inside employAsFarmer) nulls offers
+
+            // Deliberately never set an active activity here: nothing but an explicit
+            // setActiveActivityIfPossible call (ShoppingTripGameTest's own pattern) ever puts a
+            // villager into WORK — the trip command is the only thing that does so below, proving
+            // CUSTOMER-REQ-001's "forced" claim for real.
             helper.assertTrue(!villager.getBrain().isActive(Activity.WORK), "the villager starts outside WORK");
 
             CapturingSource capturing = new CapturingSource();
