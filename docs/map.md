@@ -18,13 +18,14 @@ signature page before calling into a package you did not write.
 | `villager_customers.config` | root | VillagerCustomersConfig |  |
 | `villager_customers.customer` | root | CustomerHooks, CustomerMemoryModules, CustomerRegistration, ShoppingTripBehavior |  |
 | `villager_customers.debug` | root | DebugCommand |  |
+| `villager_customers.keeper` | root | KeeperHooks, KeeperMemoryModules, KeeperRegistration, KeeperSeatSearch, KeeperSeekBehavior, SeatClaims |  |
 | `villager_customers.mixin` | root | VillagerBrainMixin, VillagerBreedingMixin, VillagerRewardTradeXpMixin |  |
 | `villager_customers.model` | root | CustomerRules, KeeperRules, MatchRule, NuggetConversion, StackShape | The pure part: the match rule, the xp-nugget conversion and the chance roll, with no Minecraft imports (docs/spec/operations/testing.md). |
 | `villager_customers.shop` | root | Shop, ShopPoi, ShopRegistration, ShopSearch |  |
 | `villager_customers.transaction` | root | ModDrivenTrade, ShopAccess, TransactionExecutor | The transaction: matching an offer against a shop and executing it (`docs/spec/domains/transaction.md`, `docs/spec/04-architecture.md` `ARCH-DEC-004`). |
 | `villager_customers` | root (test) | SourceSurfaceTest |  |
 | `villager_customers.config` | root (test) | VillagerCustomersConfigTest |  |
-| `villager_customers.gametest` | root (gametest) | ComponentPredicateGameTest, DebugCommandGameTest, NitwitBreedingGameTest, RefusalGameTest, ShopPoiGameTest, ShopSearchGameTest, ShopViewGameTest, ShoppingTripGameTest, SmokeGameTest, TestShop, TestShopNetwork, TransactionGameTest, VillageWideShopSearchGameTest |  |
+| `villager_customers.gametest` | root (gametest) | ComponentPredicateGameTest, DebugCommandGameTest, KeeperSeekGameTest, NitwitBreedingGameTest, RefusalGameTest, ShopPoiGameTest, ShopSearchGameTest, ShopViewGameTest, ShoppingTripGameTest, SmokeGameTest, TestShop, TestShopNetwork, TransactionGameTest, VillageWideShopSearchGameTest |  |
 | `villager_customers.model` | root (test) | CustomerRulesTest, KeeperRulesTest, MatchRuleTest, NuggetConversionTest |  |
 
 | build script | what |

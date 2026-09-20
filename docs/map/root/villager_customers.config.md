@@ -6,13 +6,16 @@ Every type with its summary and every non-private constructor, method and consta
 signature is the contract; read the source only when the summary is not enough.
 
 ### `class VillagerCustomersConfig` — `src/main/java/villager_customers/config/VillagerCustomersConfig.java`
-The mod's config values — shop_search_radius and, as of `VC-19`, nitwit_breeding_chance (`docs/spec/decisions/DEC-010-village-wide-shop-search.md`, `CUSTOMER-REQ-003`; `docs/spec/decisions/DEC-011-nitwit-keepers.md`, `KEEPER-REQ-001`) — read once at startup from villager_customers.properties under Fabric's own config directory.
+The mod's config values — shop_search_radius (`docs/spec/decisions/DEC-010-village-wide-shop-search.md`, `CUSTOMER-REQ-003`), nitwit_breeding_chance (`VC-19`, `docs/spec/decisions/DEC-011-nitwit-keepers.md`, `KEEPER-REQ-001`) and keeper_seek_cooldown_ticks (`VC-20`, `docs/spec/domains/keeper.md` `KEEPER-REQ-004`, added at the end per that ticket's own Build step 4) — read once at startup from villager_customers.properties under Fabric's own config directory.
 - `int shopSearchRadius()` — The configured search radius, already clamped to [CustomerRules#MIN_SHOP_SEARCH_RADIUS, CustomerRules#MAX_SHOP_SEARCH_RADIUS].
 - `double nitwitBreedingChance()` — The configured nitwit breeding chance, already clamped to [KeeperRules#MIN_NITWIT_BREEDING_CHANCE, KeeperRules#MAX_NITWIT_BREEDING_CHANCE].
+- `int keeperSeekCooldownTicks()` — The configured keeper seek cooldown, already clamped to [KeeperRules#MIN_SEEK_COOLDOWN_TICKS, KeeperRules#MAX_SEEK_COOLDOWN_TICKS] (`VC-20`, `KEEPER-REQ-004`).
 - `void load()` — Reads (and normalizes) the config file under Fabric's own config directory.
 - `void load(Path path)` — Package-visible so a plain unit test can drive this against a real temp file, no running game needed.
 - `void setShopSearchRadiusForTesting(int radius)` — Test-only: sets the in-memory radius directly, without touching disk (game tests).
 - `void resetShopSearchRadiusForTesting()` — Test-only: restores the compiled-in default (game tests).
 - `void setNitwitBreedingChanceForTesting(double chance)` — Test-only: sets the in-memory nitwit breeding chance directly, without touching disk (game tests, `VC-19`).
 - `void resetNitwitBreedingChanceForTesting()` — Test-only: restores the compiled-in default (game tests, `VC-19`).
+- `void setKeeperSeekCooldownTicksForTesting(int ticks)` — Test-only: sets the in-memory keeper seek cooldown directly, without touching disk (`VC-20`, game tests).
+- `void resetKeeperSeekCooldownTicksForTesting()` — Test-only: restores the compiled-in default (`VC-20`, game tests).
 
