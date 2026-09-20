@@ -32,7 +32,7 @@ Kevin, 2026-09-20, long-distance retest on development 826f5d4: "right clicking 
 
 - [x] The mechanism Create uses to show received payments on the ticker is identified with evidence and recorded in Findings.
 - [x] After a mod-driven unit, the ticker shows the payment tooltip as a player purchase would; covered by a game test where the data is testable.
-- [ ] `just check` green; merged through a Forgejo pull request into `development`; Kevin's client check (hover without goggles after a mod-driven trade).
+- [x] `just check` green; merged through a Forgejo pull request into `development`; Kevin's client check: no tooltip for a mod-driven trade nor for a player purchase (Kevin, 2026-09-20), so the gap is Create Fly's port; ruled "do nothing, close" and recorded in the spec.
 
 ## Findings
 
