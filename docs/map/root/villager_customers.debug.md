@@ -11,4 +11,6 @@ Development-only: /villager_customers debug forces, inspects or fully runs one v
 - `int roll(CommandSourceStack source, Villager villager)`
 - `int search(CommandSourceStack source, Villager villager)`
 - `int trip(CommandSourceStack source, Villager villager)`
+- `int box(CommandSourceStack source, BlockPos pos)` — VC-14: prints every non-empty stack in the stock ticker's payment box at pos, or that pos is not a stock ticker at all — server-side, for Kevin's live payment-box bug hunt (`docs/spec` has no requirement of its own for this: dev tooling only).
+- `int shop(CommandSourceStack source, BlockPos pos)` — VC-14: prints what Shop#at resolves for the table cloth at pos — its ticker position, keeper presence, price and goods — reconstructing Shop#at's own checks one at a time (no block entity, not a cloth, no request, empty price, no ticker, no keeper) so a non-match still says which one failed first.
 

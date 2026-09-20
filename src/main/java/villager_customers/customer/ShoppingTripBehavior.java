@@ -12,6 +12,8 @@ import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.trading.MerchantOffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import villager_customers.model.CustomerRules;
 import villager_customers.shop.Shop;
 import villager_customers.transaction.TransactionExecutor;
@@ -54,6 +56,9 @@ import java.util.Optional;
  * somewhere other than the shop, so the trip always wins the slot back.
  */
 public final class ShoppingTripBehavior extends Behavior<Villager> {
+    /** {@code VC-14}: instrumentation for Kevin's live payment-box bug hunt, greppable as {@code VC14}. */
+    private static final Logger LOGGER = LoggerFactory.getLogger("villager_customers");
+
     private static final float SPEED_MODIFIER = 0.5f;
 
     /**
@@ -146,7 +151,12 @@ public final class ShoppingTripBehavior extends Behavior<Villager> {
         // offers that matches, stopping each at its own first refusal (TransactionExecutor.execute
         // already does that per offer); an offer that no longer matches is simply skipped
         // (CUSTOMER-FAIL-002 — no offer still matching means nothing executed, no error).
-        Shop.at(level, target.pos()).ifPresent(shop -> {
+        Optional<Shop> shopAtArrival = Shop.at(level, target.pos());
+        LOGGER.info(
+            "VC14 trip arrival villager={} villagerPos={} target={} shopPresent={}", villager.getUUID(),
+            villager.blockPosition().toShortString(), target.pos().toShortString(), shopAtArrival.isPresent()
+        );
+        shopAtArrival.ifPresent(shop -> {
             for (MerchantOffer offer : villager.getOffers()) {
                 TransactionExecutor.execute(level, villager, offer, shop);
             }

@@ -3,33 +3,46 @@ package villager_customers.debug;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.zurrtum.create.content.logistics.stockTicker.StockTickerBlockEntity;
+import com.zurrtum.create.content.logistics.tableCloth.TableClothBlockEntity;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import villager_customers.VillagerCustomers;
 import villager_customers.customer.CustomerHooks;
 import villager_customers.customer.CustomerMemoryModules;
 import villager_customers.shop.Shop;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
- * Development-only: {@code /villager_customers debug <roll|search|trip> <villager>} forces,
+ * Development-only: {@code /villager_customers debug <roll|search|trip|box|shop> <...>} forces,
  * inspects or fully runs one villager's shopping trip against {@code villager_customers.customer}'s
  * real restock hook and search (`docs/spec/operations/testing.md`'s "Development tool" row,
  * `docs/spec/domains/customer.md` §3; `VC-5`). {@code roll} forces the next restock chance roll to
  * succeed; {@code search} runs the same eligible-offer, nearest-shop search read-only and prints the
  * result; {@code trip} skips the roll, runs the search, remembers the target and — forcing
  * {@code Activity.WORK} active first if the villager is not already working — lets the real
- * behaviour walk it there and trade, for screenshots and manual behaviour checks. Registered only
+ * behaviour walk it there and trade, for screenshots and manual behaviour checks. {@code box}
+ * (`VC-14`) prints every non-empty stack in the stock ticker's payment box at a position; {@code
+ * shop} (`VC-14`) prints what {@link Shop#at} resolves for a table cloth at a position, or the first
+ * reason it does not count as a shop — both for Kevin's live payment-box bug hunt. Registered only
  * when Fabric reports a development environment; never present in a released jar.
  */
 public final class DebugCommand {
@@ -47,7 +60,11 @@ public final class DebugCommand {
                 .then(Commands.literal("search").then(Commands.argument("villager", EntityArgument.entity())
                     .executes(c -> search(c.getSource(), villagerOf(c)))))
                 .then(Commands.literal("trip").then(Commands.argument("villager", EntityArgument.entity())
-                    .executes(c -> trip(c.getSource(), villagerOf(c))))))));
+                    .executes(c -> trip(c.getSource(), villagerOf(c)))))
+                .then(Commands.literal("box").then(Commands.argument("pos", BlockPosArgument.blockPos())
+                    .executes(c -> box(c.getSource(), BlockPosArgument.getBlockPos(c, "pos")))))
+                .then(Commands.literal("shop").then(Commands.argument("pos", BlockPosArgument.blockPos())
+                    .executes(c -> shop(c.getSource(), BlockPosArgument.getBlockPos(c, "pos"))))))));
     }
 
     private static Villager villagerOf(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -89,6 +106,84 @@ public final class DebugCommand {
             "command.villager_customers.debug.trip.no_shop"
         );
         return result.reason() == CustomerHooks.Search.Reason.MATCH ? 1 : 0;
+    }
+
+    /**
+     * {@code VC-14}: prints every non-empty stack in the stock ticker's payment box at {@code pos},
+     * or that {@code pos} is not a stock ticker at all — server-side, for Kevin's live payment-box
+     * bug hunt (`docs/spec` has no requirement of its own for this: dev tooling only).
+     */
+    static int box(CommandSourceStack source, BlockPos pos) {
+        ServerLevel level = source.getLevel();
+        if (!(level.getBlockEntity(pos) instanceof StockTickerBlockEntity ticker)) {
+            source.sendSuccess(() -> Component.literal(pos.toShortString() + " is not a stock ticker"), false);
+            return 0;
+        }
+        String text = pos.toShortString() + ": " + describeBox(ticker.getReceivedPaymentsHandler());
+        source.sendSuccess(() -> Component.literal(text), false);
+        return 1;
+    }
+
+    /**
+     * {@code VC-14}: prints what {@link Shop#at} resolves for the table cloth at {@code pos} — its
+     * ticker position, keeper presence, price and goods — reconstructing {@link Shop#at}'s own
+     * checks one at a time (no block entity, not a cloth, no request, empty price, no ticker, no
+     * keeper) so a non-match still says which one failed first.
+     */
+    static int shop(CommandSourceStack source, BlockPos pos) {
+        ServerLevel level = source.getLevel();
+        String posText = pos.toShortString();
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity == null) {
+            return reportNotAShop(source, posText, "no block entity");
+        }
+        if (!(blockEntity instanceof TableClothBlockEntity cloth)) {
+            return reportNotAShop(source, posText, "not a cloth");
+        }
+        if (!cloth.isShop()) {
+            return reportNotAShop(source, posText, "no request");
+        }
+        ItemStack price = cloth.getPaymentItem();
+        if (price.isEmpty() || cloth.getPaymentAmount() <= 0) {
+            return reportNotAShop(source, posText, "empty price");
+        }
+        BlockPos tickerPos = pos.offset(cloth.requestData.targetOffset());
+        BlockEntity tickerEntity = level.getBlockEntity(tickerPos);
+        if (!(tickerEntity instanceof StockTickerBlockEntity ticker)) {
+            return reportNotAShop(source, posText, "no ticker");
+        }
+        if (!ticker.isKeeperPresent()) {
+            return reportNotAShop(source, posText, "no keeper");
+        }
+        String priceText = formatStack(price.copyWithCount(cloth.getPaymentAmount()));
+        String goodsText = cloth.requestData.encodedRequest().stacks().stream()
+            .map(big -> formatStack(big.stack.copyWithCount(big.count)))
+            .collect(Collectors.joining(", "));
+        String text = posText + ": shop -- ticker " + tickerPos.toShortString() + ", keeper present, price " + priceText + ", goods " + goodsText;
+        source.sendSuccess(() -> Component.literal(text), false);
+        return 1;
+    }
+
+    private static int reportNotAShop(CommandSourceStack source, String posText, String reason) {
+        source.sendSuccess(() -> Component.literal(posText + ": not a shop -- " + reason), false);
+        return 0;
+    }
+
+    /** {@code VC-14}: every non-empty stack in {@code box}, formatted {@code count x id}, or "empty". */
+    private static String describeBox(Container box) {
+        List<String> stacks = new ArrayList<>();
+        for (int slot = 0; slot < box.getContainerSize(); slot++) {
+            ItemStack stack = box.getItem(slot);
+            if (!stack.isEmpty()) {
+                stacks.add(formatStack(stack));
+            }
+        }
+        return stacks.isEmpty() ? "empty" : String.join(", ", stacks);
+    }
+
+    /** {@code VC-14}: {@code stack} as {@code count x id}, e.g. {@code 1 x minecraft:emerald}. */
+    private static String formatStack(ItemStack stack) {
+        return stack.getCount() + " x " + BuiltInRegistries.ITEM.getKey(stack.getItem());
     }
 
     /**
