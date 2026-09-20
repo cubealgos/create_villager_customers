@@ -105,6 +105,51 @@ public final class TransactionGameTest {
     }
 
     /**
+     * VC-17: a mod-driven unit's payment lands in exactly the state Create Fly's own goggle-less
+     * hover tooltip reads it from, the same way a player's own purchase leaves it. {@code javap -p
+     * -c} on {@code com.zurrtum.create.client.foundation.blockEntity.behaviour.tooltip
+     * .StockTickerTooltipBehaviour.addToTooltip} shows it reads {@code blockEntity.receivedPayments}
+     * — the exact {@link StockTickerBlockEntity#receivedPayments} field this test reads — directly,
+     * gated only on that container being non-empty (this test's own first assertion) and on the
+     * viewing player's network permission (unrelated to who executed the trade). That field is the
+     * client's own synced copy: {@code StockTickerBlockEntity.write(ValueOutput, boolean
+     * clientPacket)} writes {@code receivedPayments} unconditionally, before the branch that gates
+     * only {@code ActiveLinks} on {@code clientPacket} — so the server-side content this test reads
+     * is exactly what every client packet (and the tooltip that reads it) already carries. Not a
+     * network test (a game test has no real connected client to observe a packet arrive) — this
+     * locks in the data-correctness half of `TRANSACTION-REQ-005`/`TRANSACTION-REQ-010` that the
+     * tooltip depends on; the visual confirmation is Kevin's own client check (VC-17 acceptance).
+     */
+    @GameTest(maxTicks = 200)
+    public void aModDrivenUnitsPaymentIsClientSyncReady(GameTestHelper helper) {
+        TestShopNetwork network = TestShopNetwork.build(helper, 20);
+        ServerLevel level = helper.getLevel();
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
+        MerchantOffer offer = new MerchantOffer(new ItemCost(Items.WHEAT, 20), new ItemStack(Items.EMERALD, 1), 1, OFFER_XP, 0.0f);
+        ShopAccess shop = new TestShop(
+            List.of(new ItemStack(Items.WHEAT, 20)), new ItemStack(Items.EMERALD, 1), network.ticker, network.chestPos
+        );
+
+        helper.runAfterDelay(2, () -> {
+            TransactionExecutor.Result result = TransactionExecutor.execute(level, villager, offer, shop);
+            helper.assertTrue(result.unitsCompleted() == 1, "one unit completed: " + result);
+
+            var box = network.ticker.receivedPayments;
+            helper.assertTrue(
+                !box.isEmpty(), "the payment box is non-empty — the same guard StockTickerTooltipBehaviour.addToTooltip checks first"
+            );
+            helper.assertTrue(paymentBoxHolds(network, Items.EMERALD, 1), "the emerald price is in the exact field the tooltip reads");
+            int nuggets = nuggetCount(network);
+            helper.assertTrue(
+                nuggets >= MIN_NUGGETS_PER_UNIT && nuggets <= MAX_NUGGETS_PER_UNIT,
+                "the xp nuggets are in the exact field the tooltip reads: " + nuggets
+            );
+
+            helper.succeed();
+        });
+    }
+
+    /**
      * VC-12: a mod-driven unit spawns no {@code ExperienceOrb} — vanilla's own trade-xp orb is
      * suppressed by {@code VillagerRewardTradeXpMixin} while {@code TransactionExecutor} holds the
      * mod-driven flag — and each unit's payment-box nuggets carry the orb's own roll (3 to 6 xp,
