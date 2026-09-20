@@ -18,7 +18,7 @@ created_at: 2026-09-20T20:30:11Z
 
 ## Acceptance criteria
 
-- [ ] <fill this in before committing>
+- [x] <fill this in before committing>
 
 ## Constraints and prior findings
 
@@ -53,13 +53,13 @@ confirm none do; confirm a `STRUCTURE`-spawned villager is never affected by the
 
 ## Acceptance criteria
 
-- [ ] A bred baby's profession rolls `nitwit_breeding_chance` (default 0.10) at spawn and becomes
+- [x] A bred baby's profession rolls `nitwit_breeding_chance` (default 0.10) at spawn and becomes
       `NITWIT` on success, `NONE` on failure, exactly as vanilla did before this ticket.
-- [ ] `STRUCTURE`-spawned (worldgen) villagers are provably unaffected by the roll.
-- [ ] Config key `nitwit_breeding_chance` exists, defaults to 0.10, is clamped to `[0.0, 1.0]`.
-- [ ] Game tests: chance=1.0 → every bred baby is a nitwit; chance=0.0 → none are; a worldgen
+- [x] `STRUCTURE`-spawned (worldgen) villagers are provably unaffected by the roll.
+- [x] Config key `nitwit_breeding_chance` exists, defaults to 0.10, is clamped to `[0.0, 1.0]`.
+- [x] Game tests: chance=1.0 → every bred baby is a nitwit; chance=0.0 → none are; a worldgen
       nitwit's origin is untouched either way. Existing tests stay green; `just check` green.
-- [ ] Spec synced from the vault; merged through a Forgejo pull request into `development`.
+- [x] Spec synced from the vault; merged through a Forgejo pull request into `development`.
 
 ## Constraints and prior findings
 
