@@ -7,6 +7,12 @@ signature is the contract; read the source only when the summary is not enough.
 
 The transaction: matching an offer against a shop and executing it (`docs/spec/domains/transaction.md`, `docs/spec/04-architecture.md` `ARCH-DEC-004`).
 
+### `class ModDrivenTrade` — `src/main/java/villager_customers/transaction/ModDrivenTrade.java`
+Marks the current thread as running a mod-driven trade unit, for villager_customers.mixin.VillagerRewardTradeXpMixin to key off of: only while this flag is set does the mixin suppress vanilla's trade-xp orb (`docs/spec/domains/transaction.md` `TRANSACTION-REQ-010`; `decisions/DEC-007-xp-nuggets.md`; VC-12).
+- `void begin()` — Marks the current thread as running a mod-driven trade unit.
+- `void end()` — Clears the mark; always called from a finally block by whoever called #begin().
+- `boolean isActive()` — Whether the current thread is inside a mod-driven trade unit right now.
+
 ### `interface ShopAccess` — `src/main/java/villager_customers/transaction/ShopAccess.java`
 The minimal, read-only view of a table-cloth shop that TransactionExecutor needs (`docs/spec/domains/transaction.md`).
 - `List<ItemStack> goods()` — The table cloth's configured goods: what a matched offer draws from the network stock.

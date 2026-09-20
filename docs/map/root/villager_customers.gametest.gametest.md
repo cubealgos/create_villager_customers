@@ -66,8 +66,12 @@ A small, real Create Fly logistics network for the transaction game tests: a che
 ### `class TransactionGameTest` — `src/gametest/java/villager_customers/gametest/TransactionGameTest.java`
 VC-3: a matched offer executed against a real chest-and-packager network draws the goods, pays the price and xp nuggets, and advances the offer's uses and the villager's trade xp — one unit per visit while stock and uses allow (`docs/spec/domains/transaction.md` `TRANSACTION-REQ-004` through `TRANSACTION-REQ-007`) — while the offer's demand and the villager's reputation toward a player stay exactly as they were, since a mod-driven unit involves no player (`TRANSACTION-REQ-009`).
 - `void aMatchedOfferDrawsPaysAndAdvancesUsesOneVisitAtATime(GameTestHelper helper)`
+- `void aModDrivenUnitSpawnsNoOrbAndItsNuggetsCarryTheOrbsRoll(GameTestHelper helper)` — VC-12: a mod-driven unit spawns no ExperienceOrb — vanilla's own trade-xp orb is suppressed by VillagerRewardTradeXpMixin while TransactionExecutor holds the mod-driven flag — and each unit's payment-box nuggets carry the orb's own roll (3 to 6 xp, always 1 or 2 nuggets at 3 xp each) rather than the offer's own xp, while the villager's levelling xp still rises by the offer's xp every time (`TRANSACTION-REQ-010`).
+- `void aDirectNotifyTradeOutsideTheExecutorStillSpawnsItsOrb(GameTestHelper helper)` — VC-12: VillagerRewardTradeXpMixin scopes its suppression to a mod-driven unit only — with ModDrivenTrade's flag not set, calling villager.notifyTrade(offer) directly (as a real player trade does, never going through TransactionExecutor) still spawns its vanilla ExperienceOrb, proving the mixin does not suppress the orb unconditionally.
 - `int chestWheatCount(TestShopNetwork network)`
 - `boolean paymentBoxHolds(TestShopNetwork network, Item item, int count)`
 - `boolean paymentBoxHolds(StockTickerBlockEntity ticker, Item item, int count)`
+- `int itemCount(StockTickerBlockEntity ticker, Item item)` — How many of item the payment box holds in total, across every slot.
+- `int nuggetCount(TestShopNetwork network)`
 - `int wheatCount(ChestBlockEntity chest)`
 

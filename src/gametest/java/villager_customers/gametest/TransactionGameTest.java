@@ -30,7 +30,13 @@ import villager_customers.transaction.TransactionExecutor;
  */
 public final class TransactionGameTest {
     private static final int OFFER_XP = 10;
-    private static final int EXPECTED_NUGGETS = 4; // ceil(10 / 3), TRANSACTION-REQ-010
+
+    /**
+     * Every unit's nugget count is the orb roll (3 to 6 xp) divided by 3 xp per nugget, rounded up:
+     * always 1 or 2, regardless of the offer's own xp (`TRANSACTION-REQ-010`, VC-12).
+     */
+    private static final int MIN_NUGGETS_PER_UNIT = 1;
+    private static final int MAX_NUGGETS_PER_UNIT = 2;
 
     @GameTest(maxTicks = 200)
     public void aMatchedOfferDrawsPaysAndAdvancesUsesOneVisitAtATime(GameTestHelper helper) {
@@ -59,9 +65,10 @@ public final class TransactionGameTest {
             helper.assertTrue(offer.getUses() == 1, "the offer's uses are 1: " + offer.getUses());
             helper.assertTrue(chestWheatCount(network) == 0, "the 20 wheat left the chest");
             helper.assertTrue(paymentBoxHolds(network, Items.EMERALD, 1), "the payment box holds one emerald");
+            int nuggetsAfterFirst = nuggetCount(network);
             helper.assertTrue(
-                paymentBoxHolds(network, AllItems.EXP_NUGGET, EXPECTED_NUGGETS),
-                "the payment box holds " + EXPECTED_NUGGETS + " xp nuggets (10 xp / 3 per nugget, rounded up)"
+                nuggetsAfterFirst >= MIN_NUGGETS_PER_UNIT && nuggetsAfterFirst <= MAX_NUGGETS_PER_UNIT,
+                "the payment box holds 1 or 2 xp nuggets (the orb's 3-to-6 xp roll / 3 per nugget, rounded up): " + nuggetsAfterFirst
             );
             helper.assertTrue(villager.getVillagerXp() == OFFER_XP, "the villager's trade xp was granted once: " + villager.getVillagerXp());
             helper.assertTrue(offer.getDemand() == demandBefore, "the offer's demand is untouched: " + offer.getDemand() + " vs " + demandBefore);
@@ -76,12 +83,15 @@ public final class TransactionGameTest {
             helper.assertTrue(second.reason() == TransactionExecutor.Result.Reason.OUT_OF_USES, "stops out of uses: " + second);
             helper.assertTrue(offer.getUses() == 2, "the offer's uses are 2: " + offer.getUses());
             helper.assertTrue(paymentBoxHolds(network, Items.EMERALD, 2), "the payment box now holds two emeralds");
+            int nuggetsAfterSecond = nuggetCount(network);
             helper.assertTrue(
-                paymentBoxHolds(network, AllItems.EXP_NUGGET, 2 * EXPECTED_NUGGETS), "the payment box now holds nuggets for both units"
+                nuggetsAfterSecond >= 2 * MIN_NUGGETS_PER_UNIT && nuggetsAfterSecond <= 2 * MAX_NUGGETS_PER_UNIT,
+                "the payment box now holds nuggets for both units (2 to 4): " + nuggetsAfterSecond
             );
             helper.assertTrue(
                 villager.getVillagerXp() == 2 * OFFER_XP, "the villager's trade xp was granted a second time: " + villager.getVillagerXp()
             );
+            helper.assertEntityNotPresent(EntityTypes.EXPERIENCE_ORB);
             helper.assertTrue(
                 offer.getDemand() == demandBefore, "the offer's demand is still untouched after a second unit: " + offer.getDemand()
             );
@@ -90,6 +100,74 @@ public final class TransactionGameTest {
                 "the villager's reputation toward the player is still untouched after a second unit: " + villager.getPlayerReputation(mockPlayer)
             );
 
+            helper.succeed();
+        });
+    }
+
+    /**
+     * VC-12: a mod-driven unit spawns no {@code ExperienceOrb} — vanilla's own trade-xp orb is
+     * suppressed by {@code VillagerRewardTradeXpMixin} while {@code TransactionExecutor} holds the
+     * mod-driven flag — and each unit's payment-box nuggets carry the orb's own roll (3 to 6 xp,
+     * always 1 or 2 nuggets at 3 xp each) rather than the offer's own xp, while the villager's
+     * levelling xp still rises by the offer's xp every time (`TRANSACTION-REQ-010`).
+     *
+     * <p>Run one unit at a time across 20 fresh offers (rather than one offer with 20 uses) so each
+     * unit's own nugget delta can be checked individually against 1..2, not just the 20-unit total.
+     */
+    @GameTest(maxTicks = 800)
+    public void aModDrivenUnitSpawnsNoOrbAndItsNuggetsCarryTheOrbsRoll(GameTestHelper helper) {
+        int units = 20;
+        TestShopNetwork network = TestShopNetwork.build(helper, 0);
+        ServerLevel level = helper.getLevel();
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
+
+        helper.runAfterDelay(2, () -> {
+            int nuggetsBefore = 0;
+            for (int unit = 1; unit <= units; unit++) {
+                network.setWheat(1); // exactly enough for this one unit
+                MerchantOffer offer = new MerchantOffer(new ItemCost(Items.WHEAT, 1), new ItemStack(Items.EMERALD, 1), 1, OFFER_XP, 0.0f);
+                ShopAccess shop = new TestShop(
+                    List.of(new ItemStack(Items.WHEAT, 1)), new ItemStack(Items.EMERALD, 1), network.ticker, network.chestPos
+                );
+
+                TransactionExecutor.Result result = TransactionExecutor.execute(level, villager, offer, shop);
+                helper.assertTrue(result.unitsCompleted() == 1, "unit " + unit + " completed: " + result);
+
+                int nuggetsAfter = nuggetCount(network);
+                int nuggetsThisUnit = nuggetsAfter - nuggetsBefore;
+                helper.assertTrue(
+                    nuggetsThisUnit >= MIN_NUGGETS_PER_UNIT && nuggetsThisUnit <= MAX_NUGGETS_PER_UNIT,
+                    "unit " + unit + " inserted 1 or 2 xp nuggets, was " + nuggetsThisUnit
+                );
+                nuggetsBefore = nuggetsAfter;
+
+                helper.assertTrue(
+                    villager.getVillagerXp() == unit * OFFER_XP,
+                    "the villager's trade xp rose by the offer's xp on unit " + unit + ": " + villager.getVillagerXp()
+                );
+            }
+
+            helper.assertEntityNotPresent(EntityTypes.EXPERIENCE_ORB);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * VC-12: {@code VillagerRewardTradeXpMixin} scopes its suppression to a mod-driven unit only —
+     * with {@code ModDrivenTrade}'s flag not set, calling {@code villager.notifyTrade(offer)} directly
+     * (as a real player trade does, never going through {@link TransactionExecutor}) still spawns its
+     * vanilla {@code ExperienceOrb}, proving the mixin does not suppress the orb unconditionally.
+     */
+    @GameTest(maxTicks = 200)
+    public void aDirectNotifyTradeOutsideTheExecutorStillSpawnsItsOrb(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Villager villager = helper.spawn(EntityTypes.VILLAGER, new BlockPos(1, 2, 1));
+        MerchantOffer offer = new MerchantOffer(new ItemCost(Items.WHEAT, 1), new ItemStack(Items.EMERALD, 1), 1, OFFER_XP, 0.0f);
+        helper.assertTrue(offer.shouldRewardExp(), "the offer is set up to reward xp, so vanilla would spawn an orb for it");
+
+        helper.runAfterDelay(2, () -> {
+            villager.notifyTrade(offer);
+            helper.assertEntityPresent(EntityTypes.EXPERIENCE_ORB);
             helper.succeed();
         });
     }
@@ -104,6 +182,11 @@ public final class TransactionGameTest {
     }
 
     static boolean paymentBoxHolds(StockTickerBlockEntity ticker, Item item, int count) {
+        return itemCount(ticker, item) == count;
+    }
+
+    /** How many of {@code item} the payment box holds in total, across every slot. */
+    static int itemCount(StockTickerBlockEntity ticker, Item item) {
         var box = ticker.receivedPayments;
         int total = 0;
         for (int slot = 0; slot < box.getContainerSize(); slot++) {
@@ -112,7 +195,11 @@ public final class TransactionGameTest {
                 total += stack.getCount();
             }
         }
-        return total == count;
+        return total;
+    }
+
+    static int nuggetCount(TestShopNetwork network) {
+        return itemCount(network.ticker, AllItems.EXP_NUGGET);
     }
 
     static int wheatCount(ChestBlockEntity chest) {
