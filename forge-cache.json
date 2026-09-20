@@ -1,7 +1,17 @@
 {
   "pulls": {
-    "at": 1789882172.0314722,
+    "at": 1789891874.830592,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "success",
+        "head": "chore/vc-14-instrument",
+        "index": "14",
+        "state": "merged",
+        "title": "chore(villager_customers): instrument the transaction: debug box and shop commands, VC14 log lines per unit (VC-14)",
+        "updated": "2026-09-20T05:29:43Z"
+      },
       {
         "author": "scheeren",
         "base": "development",

@@ -18,10 +18,10 @@ Read `MerchantOffer.getItemCostA()`/`ItemCost.test`/`DataComponentPredicate` in 
 
 ## Acceptance criteria
 
-- [ ] Game test: an offer whose cost carries a component predicate (e.g. a named potion or an enchanted book component; use a vanilla component the test can set) matches a shop whose goods stack satisfies it and refuses one whose stack does not (`NO_MATCH`).
-- [ ] Game test: the draw takes only matching stacks from the network when both variants are in stock.
-- [ ] Vault spec carries `TRANSACTION-REQ-011`; `docs/spec/` synced.
-- [ ] Merged through a Forgejo pull request into `development`.
+- [x] Game test: an offer whose cost carries a component predicate (e.g. a named potion or an enchanted book component; use a vanilla component the test can set) matches a shop whose goods stack satisfies it and refuses one whose stack does not (`NO_MATCH`).
+- [x] Game test: the draw takes only matching stacks from the network when both variants are in stock.
+- [x] Vault spec carries `TRANSACTION-REQ-011`; `docs/spec/` synced.
+- [x] Merged through a Forgejo pull request into `development`.
 
 ## Constraints and prior findings
 
