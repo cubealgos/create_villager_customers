@@ -31,6 +31,10 @@ VC-5's three acceptance-criteria game tests for villager_customers.debug.DebugCo
 - `void aBrokenSeatUnseatsTheNitwitTheSameWayAsEjection(GameTestHelper helper)`
 - `void noEligibleSeatAnywhereLeavesTheNitwitIdleWithNoError(GameTestHelper helper)`
 
+### `class NitwitBreedingGameTest` — `src/gametest/java/villager_customers/gametest/NitwitBreedingGameTest.java`
+`VC-19`: villager_customers.mixin.VillagerBreedingMixin rolls nitwit_breeding_chance on Villager.finalizeSpawn's BREEDING branch and, on success, overrides the baby's profession to NITWIT instead of vanilla's unconditional NONE (`docs/spec/domains/keeper.md` `KEEPER-REQ-001`, `002`; `docs/spec/decisions/DEC-011-nitwit-keepers.md`).
+- `void theBreedingRollRespectsTheConfiguredChanceAndNeverTouchesWorldgen(GameTestHelper helper)`
+
 ### `class RefusalGameTest` — `src/gametest/java/villager_customers/gametest/RefusalGameTest.java`
 VC-3: the three ways a unit is refused before anything moves — insufficient network stock, a full payment box, and an offer that never matches at all (`docs/spec/domains/transaction.md` `TRANSACTION-FAIL-001`, `TRANSACTION-FAIL-002`, `TRANSACTION-FAIL-003`).
 - `void stockTooLowRefusesTheUnitAndMovesNothing(GameTestHelper helper)`

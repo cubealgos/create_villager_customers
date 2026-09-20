@@ -9,13 +9,17 @@ signature is the contract; read the source only when the summary is not enough.
 VillagerCustomersConfig#load(Path) against a real file in a temp directory — no running game needed, since the package-visible load(Path) overload takes the file to read directly rather than resolving it through FabricLoader (`VC-18`, `docs/spec/decisions/DEC-010-village-wide-shop-search.md`).
 - `void resetInMemoryValue()`
 - `void anAbsentFileIsCreatedWithTheDefault(Path dir)`
-- `void aKeeperCooldownWithinBoundsIsReadAsIs(Path dir)`
-- `void aKeeperCooldownBelowTheMinimumIsClampedUpOnDiskToo(Path dir)`
-- `void aKeeperCooldownAboveTheMaximumIsClampedDownOnDiskToo(Path dir)`
-- `void aMalformedKeeperCooldownFallsBackToTheDefault(Path dir)`
 - `void aValueWithinBoundsIsReadAsIs(Path dir)`
 - `void aValueBelowTheMinimumIsClampedUpOnDiskToo(Path dir)`
 - `void aValueAboveTheMaximumIsClampedDownOnDiskToo(Path dir)`
 - `void aMalformedValueFallsBackToTheDefault(Path dir)`
 - `void aMissingKeyFallsBackToTheDefault(Path dir)`
+- `void aNitwitBreedingChanceWithinBoundsIsReadAsIs(Path dir)`
+- `void aNitwitBreedingChanceBelowTheMinimumIsClampedUpOnDiskToo(Path dir)`
+- `void aNitwitBreedingChanceAboveTheMaximumIsClampedDownOnDiskToo(Path dir)`
+- `void aMalformedNitwitBreedingChanceFallsBackToTheDefault(Path dir)`
+- `void aKeeperCooldownWithinBoundsIsReadAsIs(Path dir)`
+- `void aKeeperCooldownBelowTheMinimumIsClampedUpOnDiskToo(Path dir)`
+- `void aKeeperCooldownAboveTheMaximumIsClampedDownOnDiskToo(Path dir)`
+- `void aMalformedKeeperCooldownFallsBackToTheDefault(Path dir)`
 

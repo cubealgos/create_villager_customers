@@ -17,6 +17,7 @@
       "villager_customers.gametest.DebugCommandGameTest",
       "villager_customers.gametest.ComponentPredicateGameTest",
       "villager_customers.gametest.VillageWideShopSearchGameTest",
+      "villager_customers.gametest.NitwitBreedingGameTest",
       "villager_customers.gametest.KeeperSeekGameTest"
     ]
   },

@@ -8,6 +8,9 @@ signature is the contract; read the source only when the summary is not enough.
 ### `class VillagerBrainMixin` — `src/main/java/villager_customers/mixin/VillagerBrainMixin.java`
 Wires the shopping trip and the nitwit keeper seek into a villager's brain, and rolls the restock chance (`docs/spec/04-architecture.md` `ARCH-DEC-002`, `ARCH-DEC-006`; `docs/spec/domains/customer.md` `CUSTOMER-REQ-001`, `002`; `docs/spec/domains/keeper.md` `KEEPER-REQ-004`).
 
+### `class VillagerBreedingMixin` — `src/main/java/villager_customers/mixin/VillagerBreedingMixin.java`
+Rolls the nitwit breeding chance (`docs/spec/domains/keeper.md` `KEEPER-REQ-001`, `002`; `docs/spec/decisions/DEC-011-nitwit-keepers.md`; `docs/spec/04-architecture.md` `ARCH-DEC-007`).
+
 ### `class VillagerRewardTradeXpMixin` — `src/main/java/villager_customers/mixin/VillagerRewardTradeXpMixin.java`
 Suppresses vanilla's trade-xp orb for a mod-driven unit, while leaving the villager's own levelling untouched (`docs/spec/domains/transaction.md` `TRANSACTION-REQ-010`; `decisions/DEC-007-xp-nuggets.md`; VC-12).
 
