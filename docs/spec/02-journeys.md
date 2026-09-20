@@ -99,3 +99,22 @@ Actor: server, shop owner · Goal: fail the trip without a stuck villager or a h
 | 3 | server | On arrival (or an earlier recheck), finds the target no longer counts as a shop (`SHOP-REQ-006`). |
 | 4 | server | Cancels the trip, clears the trip memory, starts the cooldown (`CUSTOMER-REQ-007`). |
 | 5 | villager | Resumes ordinary `WORK` behaviour with no error and no partial transaction. |
+
+### `UC-008` — A mall builder breeds villagers into keepers
+
+Actor: nitwit villager (`ACTORS-009`) · Goal: become a shop's keeper with no help from the player
+beyond breeding villagers and leaving a seat unclaimed
+
+| Step | Actor | Action |
+|---|---|---|
+| 1 | player | Breeds two villagers, as for any villager farm, with no nitwits in mind. |
+| 2 | server | Rolls the configured chance (default 10%) on the baby's spawn; this time it succeeds, and the baby's profession is set to `NITWIT` at birth instead of `NONE` (`KEEPER-REQ-001`). |
+| 3 | server | The baby grows up on vanilla's own timer, unrelated to this mod. |
+| 4 | server | On its next seek timer, the now-adult nitwit searches the village's seats for one next to a keeperless stock ticker, within the same 128-block radius `CUSTOMER` uses (`KEEPER-REQ-004`, `005`). |
+| 5 | server | Finds the player's mall's one unclaimed seat, next to a table cloth's stock ticker that has never had a keeper; claims it (`KEEPER-REQ-006`, `007`). |
+| 6 | server | Walks the nitwit to the seat, reusing `CUSTOMER`'s trip behaviour (`KEEPER-REQ-008`). |
+| 7 | server | The nitwit steps onto the seat block; Create's own `SeatBlock.onEntityMovement` auto-seats it — no mod call (`KEEPER-REQ-009`). |
+| 8 | player | Later checks the shop: `isKeeperPresent()` now reports true, and a `CUSTOMER` villager's next matching offer can complete there for the first time. |
+
+Fails when: no seat is ever built near a ticker, or every existing seat already has a keeper → the
+nitwit keeps behaving like a normal nitwit, retrying on the next seek timer (`KEEPER-FAIL-007`).

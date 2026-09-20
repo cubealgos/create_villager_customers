@@ -16,6 +16,7 @@ category: "create_villager_customers"
 | `ACTORS-006` | **Datapack or resource pack author** | Retune the chance per restock, the xp-nugget conversion, the walk timeout and the cooldown as data constants (`decisions/DEC-009-chance-per-restock.md`) | Change the match rule or the mixin: those are code |
 | `ACTORS-007` | **Server operator** | Install and remove the mod; nothing to configure beyond the data constants above | Read or edit a trip in progress from outside the world save |
 | `ACTORS-008` | **Contributor** | Build, test and change the mod under MIT | Add telemetry or network calls (`operations/compliance.md`) |
+| `ACTORS-009` | **Villager (nitwit keeper)** | While adult, seek a free seat next to a keeperless stock ticker within the village search radius; claim it, walk to it, and let Create's own seat auto-seat it (`domains/keeper.md`); remain seated day and night until ejected or its seat/ticker breaks | Trade — a nitwit has no offers; seek while still a baby; claim a seat another nitwit already claimed; leave a seat once seated except by ejection or the seat breaking |
 
 ## Findings from writing this
 
@@ -35,3 +36,7 @@ category: "create_villager_customers"
   is untouched: the mod reads the network's stock summary and draws from it directly
   (`decisions/DEC-006-direct-draw.md`), never through a transfer path, so the player's existing
   logistics keep working exactly as before this mod is installed.
+- **`FINDING-5`** `ACTORS-009` is the one actor in this sheet with no `MerchantOffer` and no
+  transaction of its own: a nitwit keeper never touches `domains/transaction.md` at all. Its whole
+  contribution is satisfying `isKeeperPresent()` so a `CUSTOMER` villager's trip can complete
+  (`domains/keeper.md`) — the two domains meet only at that one boolean.
