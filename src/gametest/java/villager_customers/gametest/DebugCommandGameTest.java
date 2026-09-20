@@ -116,9 +116,10 @@ public final class DebugCommandGameTest {
     /**
      * VC-6 sweep gap, same finding as {@link #searchReportsNoOfferWithUsesLeft}: an eligible offer
      * with no reachable shop at all. {@code CustomerHooks.search} runs at the full production
-     * {@code ShopSearch.VILLAGE_REACH} (48 blocks), which — as {@code ShopSearchGameTest}'s own
-     * Javadoc documents — reaches into neighbouring game-test structures roughly a dozen blocks
-     * away; most of this suite's shops share the same wheat-for-emerald shape, so a plain
+     * {@code shop_search_radius} (default 128 blocks, `VC-18`; 48 at the time this test was written),
+     * which — as {@code ShopSearchGameTest}'s own Javadoc documents — reaches into neighbouring
+     * game-test structures roughly a dozen blocks away; most of this suite's shops share the same
+     * wheat-for-emerald shape, so a plain
      * {@link #freshOffer()} here found one of theirs on first attempt (caught by this ticket's own
      * `just check` run, not by inspection). An offer shaped nothing like any shop this suite builds
      * — including {@code ShoppingTripGameTest}'s own diamond/netherite-ingot one, VC-6's other new

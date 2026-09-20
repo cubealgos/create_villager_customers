@@ -21,14 +21,13 @@ import java.util.List;
  * Two shops, one nearer: {@link ShopSearch#near} returns the nearer one first (VC-2,
  * `SHOP-DEC-001`).
  *
- * <p>Every position here stays within a few blocks of the test's own origin (never the full
- * {@link ShopSearch#VILLAGE_REACH}), and every search below passes a small explicit radius rather
- * than that constant: Fabric's game test batches place structures roughly a dozen blocks apart
+ * <p>Every position here stays within a few blocks of the test's own origin, and every search
+ * below passes a small explicit radius rather than production's {@code shop_search_radius}
+ * (default 128, `VC-18`): Fabric's game test batches place structures roughly a dozen blocks apart
  * (`net.minecraft.gametest.framework.StructureGridSpawner`, structure size plus a small margin), so
- * a 48-block search from a test this close to its neighbours picks up their point-of-interest
+ * a search that wide from a test this close to its neighbours picks up their point-of-interest
  * records too — confirmed by reproducing it once with a debug dump of the search's internal
- * grouping. {@code VILLAGE_REACH}'s value itself is verified directly against
- * {@code AcquirePoi.SCAN_RANGE} (see {@link ShopSearch}'s own Javadoc), not by this game test.
+ * grouping.
  */
 public final class ShopSearchGameTest {
     private static final int TEST_RADIUS = 8;

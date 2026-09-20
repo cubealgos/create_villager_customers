@@ -88,3 +88,9 @@ VC-3: a matched offer executed against a real chest-and-packager network draws t
 - `int nuggetCount(TestShopNetwork network)`
 - `int wheatCount(ChestBlockEntity chest)`
 
+### `class VillageWideShopSearchGameTest` — `src/gametest/java/villager_customers/gametest/VillageWideShopSearchGameTest.java`
+`VC-18`'s three acceptance-criteria game tests for the search origin (`docs/spec/decisions/DEC-010-village-wide-shop-search.md`, `CUSTOMER-REQ-003`): a shop 100 blocks from the villager's meeting point is found when the villager stands at that point; a shop 100 blocks from the villager but 200 from its meeting point is not; and a villager with no meeting point searches from its own position.
+- `void aShopAtTheMeetingPointsRangeIsFoundWhenTheVillagerStandsThere(GameTestHelper helper)`
+- `void aShopFarFromTheMeetingPointButNearTheVillagerIsNotFound(GameTestHelper helper)`
+- `void aVillagerWithNoMeetingPointSearchesFromItsOwnPosition(GameTestHelper helper)`
+

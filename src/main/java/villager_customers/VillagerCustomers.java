@@ -4,6 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import villager_customers.config.VillagerCustomersConfig;
 import villager_customers.customer.CustomerRegistration;
 import villager_customers.debug.DebugCommand;
 import villager_customers.shop.ShopRegistration;
@@ -15,6 +16,7 @@ public final class VillagerCustomers implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        VillagerCustomersConfig.load();
         ShopRegistration.register();
         CustomerRegistration.register();
         if (FabricLoader.getInstance().isDevelopmentEnvironment()) DebugCommand.register();

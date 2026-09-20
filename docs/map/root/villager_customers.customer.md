@@ -16,8 +16,8 @@ The restock hook villager_customers.mixin.VillagerBrainMixin calls (`docs/spec/d
 - `void setRollSourceForTesting(DoubleSupplier source)` — Test-only: forces the next roll(s)' source.
 - `void resetRollSourceForTesting()` — Test-only: restores the production roll source (Math#random()).
 
-    - **nested** `record Search(Optional<Shop> shop, Optional<MerchantOffer> offer, Reason reason)`
-    The outcome of #search: a matched shop and offer (reason() == MATCH, both present), or which of the two eligibility checks failed (both empty).
+    - **nested** `record Search(Optional<Shop> shop, Optional<MerchantOffer> offer, Reason reason, BlockPos origin, int radius)`
+    The outcome of #search: a matched shop and offer (reason() == MATCH, both present), or which of the two eligibility checks failed (both empty); origin and radius are the ones this particular search actually used (`VC-18`), so villager_customers.debug.DebugCommand's search subcommand can report them.
 
     - **nested** `enum Reason`
 

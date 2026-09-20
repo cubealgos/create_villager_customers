@@ -21,6 +21,21 @@ public final class CustomerRules {
     /** The cooldown started after a cancelled or timed-out trip, in ticks (`CUSTOMER-REQ-007`). */
     public static final int COOLDOWN_TICKS = 2400;
 
+    /**
+     * The default shop-search radius, in blocks horizontally from the search origin — the village's
+     * meeting point (bell) when the villager remembers one, else its own position
+     * (`CUSTOMER-REQ-003`, amended by `docs/spec/decisions/DEC-010-village-wide-shop-search.md`).
+     * Overridable through the mod's config as {@code shop_search_radius}
+     * ({@code villager_customers.config.VillagerCustomersConfig}).
+     */
+    public static final int DEFAULT_SHOP_SEARCH_RADIUS = 128;
+
+    /** The lowest {@code shop_search_radius} the config accepts; smaller values clamp up to this (`DEC-010`). */
+    public static final int MIN_SHOP_SEARCH_RADIUS = 16;
+
+    /** The highest {@code shop_search_radius} the config accepts; larger values clamp down to this (`DEC-010`). */
+    public static final int MAX_SHOP_SEARCH_RADIUS = 256;
+
     private CustomerRules() {
     }
 
@@ -31,5 +46,14 @@ public final class CustomerRules {
      */
     public static boolean rolls(double random) {
         return random < CHANCE_PER_RESTOCK;
+    }
+
+    /**
+     * {@code radius} clamped to {@code [}{@link #MIN_SHOP_SEARCH_RADIUS}{@code , }
+     * {@link #MAX_SHOP_SEARCH_RADIUS}{@code ]} (`DEC-010`'s config clamp, applied to whatever value
+     * {@code villager_customers.config.VillagerCustomersConfig} reads from disk).
+     */
+    public static int clampShopSearchRadius(int radius) {
+        return Math.min(MAX_SHOP_SEARCH_RADIUS, Math.max(MIN_SHOP_SEARCH_RADIUS, radius));
     }
 }

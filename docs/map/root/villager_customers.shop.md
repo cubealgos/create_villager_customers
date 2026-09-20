@@ -25,8 +25,6 @@ This package's single entry point into VillagerCustomers.onInitialize (`docs/spe
 
 ### `class ShopSearch` — `src/main/java/villager_customers/shop/ShopSearch.java`
 Searches the village point-of-interest index for shop candidates, nearest first (`docs/spec/domains/shop.md` `SHOP-REQ-004`, `SHOP-REQ-006`; `SHOP-DEC-001`).
-- `int VILLAGE_REACH` — The search radius: vanilla's own job-site point-of-interest scan range, so this mod adds no distance of its own (`SHOP-REQ-004`).
 - `List<Shop> near(ServerLevel level, BlockPos origin, int radius)` — Every shop within radius of origin, nearest first (`SHOP-DEC-001`).
-- `List<Shop> near(ServerLevel level, BlockPos origin)` — Every shop within #VILLAGE_REACH of origin, nearest first.
 - `Optional<Shop> matching(ServerLevel level, BlockPos origin, int radius, Predicate<Shop> filter)` — The nearest shop within radius of origin that satisfies filter.
 

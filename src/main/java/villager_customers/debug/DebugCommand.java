@@ -83,10 +83,7 @@ public final class DebugCommand {
 
     static int search(CommandSourceStack source, Villager villager) {
         CustomerHooks.Search result = CustomerHooks.search(source.getLevel(), villager);
-        reportOutcome(
-            source, villager, result, "command.villager_customers.debug.search.match", "command.villager_customers.debug.search.no_offer",
-            "command.villager_customers.debug.search.no_shop"
-        );
+        reportSearchOutcome(source, villager, result);
         return result.reason() == CustomerHooks.Search.Reason.MATCH ? 1 : 0;
     }
 
@@ -207,6 +204,45 @@ public final class DebugCommand {
             }
             case NO_OFFER_WITH_USES_LEFT -> source.sendSuccess(() -> Component.translatable(noOfferKey, villager.getDisplayName()), false);
             case NO_SHOP_MATCHING_OFFER -> source.sendSuccess(() -> Component.translatable(noShopKey, villager.getDisplayName()), false);
+        }
+    }
+
+    /**
+     * Prints {@code result} through {@code source} for the {@code search} subcommand specifically
+     * (`VC-18`): unlike {@link #reportOutcome}'s shared match/no_offer/no_shop wording (also used by
+     * {@code trip}), every line here also names the origin and radius the search actually used —
+     * the village's meeting point or the villager's own position, and the configured
+     * {@code shop_search_radius} — so a player or Kevin can see why a shop was or was not found
+     * without reading the log.
+     */
+    private static void reportSearchOutcome(CommandSourceStack source, Villager villager, CustomerHooks.Search result) {
+        String originText = result.origin().toShortString();
+        String radiusText = String.valueOf(result.radius());
+        switch (result.reason()) {
+            case MATCH -> {
+                Shop shop = result.shop().orElseThrow();
+                MerchantOffer offer = result.offer().orElseThrow();
+                String posText = shop.pos().toShortString();
+                double distance = Math.sqrt(villager.blockPosition().distSqr(shop.pos()));
+                String distanceText = String.valueOf(Math.round(distance));
+                String offerText = offerLabel(offer);
+                source.sendSuccess(
+                    () -> Component.translatable(
+                        "command.villager_customers.debug.search.match", villager.getDisplayName(), posText, distanceText, offerText, radiusText,
+                        originText
+                    ), false
+                );
+            }
+            case NO_OFFER_WITH_USES_LEFT -> source.sendSuccess(
+                () -> Component.translatable(
+                    "command.villager_customers.debug.search.no_offer", villager.getDisplayName(), radiusText, originText
+                ), false
+            );
+            case NO_SHOP_MATCHING_OFFER -> source.sendSuccess(
+                () -> Component.translatable(
+                    "command.villager_customers.debug.search.no_shop", villager.getDisplayName(), radiusText, originText
+                ), false
+            );
         }
     }
 
