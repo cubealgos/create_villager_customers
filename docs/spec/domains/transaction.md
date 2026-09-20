@@ -70,6 +70,7 @@ what makes a table cloth count as a shop in the first place (`domains/shop.md`).
 | `TRANSACTION-FAIL-002` | Stock too low mid-loop | Loop stops; units already completed stand; offer keeps its remaining uses (`UC-003`). |
 | `TRANSACTION-FAIL-003` | Payment box full mid-loop | Loop stops ("cash register full"); units already completed stand (`UC-004`). |
 | `TRANSACTION-FAIL-004` | Table cloth's stock ticker has no keeper present | Not a candidate at all — caught by `domains/shop.md`, not reached here. |
+| `TRANSACTION-FAIL-005` | The stock ticker shows no payments tooltip after a unit | Create Fly's port never renders its `StockTickerTooltipBehaviour` (no tooltip for a player purchase either; Kevin, 2026-09-20, VC-17). Known upstream gap, ruled "do nothing": the payment is in the box and right-click withdraws it; no tooltip of this mod's own. |
 
 ## 7. Open questions
 
