@@ -8,9 +8,13 @@ Minecraft client jar in the Gradle cache -- never vendored into this repo. The j
 globbing `~/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-merged-deobf/26.2/*.jar`
 first, then any `~/.gradle/caches/fabric-loom/26.2/**/*.jar` that contains the sprite; pass
 `--jar PATH` to use a specific jar instead. The sprite is cropped to its alpha bounding box, then
-scaled without smoothing to a 320 px fit box on the navy badge (a white rim, a pale band, a navy
-disc `#0d1226` with its edge darkened to `#090c1b`, and a blueprint grid lifted to `#344c80`), with
-a one-pixel white outline and a soft shadow scaled to match. Requires Pillow.
+scaled without smoothing to a fit box on the navy badge (a white rim, a pale band, a navy disc
+`#0d1226` with its edge darkened to `#090c1b`, and a blueprint grid lifted to `#344c80`), with a
+one-pixel white outline and a soft shadow scaled to match. Requires Pillow.
+
+Kevin's icon rulings, 2026-09-21: pixel-art items sit at 70% of the previous fit box (`FIT`, a
+multiplier on `BOX`, mirroring the fleet tool's `navy-badge.py --fit`) -- 320px -> 224px. This mod
+is a Create Fly add-on, so the blueprint grid stays.
 """
 import argparse
 import io
@@ -32,6 +36,7 @@ SHADOW = (20, 50, 90, 130)
 SPRITE_ENTRY = "assets/minecraft/textures/item/emerald.png"
 OUT = Path("docs/modrinth/icon.png")
 BOX = 320
+FIT = 0.7  # Kevin, 2026-09-21: pixel-art items at 70% of the previous fit box
 
 GRADLE_CACHE = Path.home() / ".gradle" / "caches" / "fabric-loom"
 PRIMARY_GLOB = GRADLE_CACHE / "minecraftMaven" / "net" / "minecraft" / "minecraft-merged-deobf" / "26.2"
@@ -96,7 +101,8 @@ def badge() -> Image.Image:
 
 def subject(img: Image.Image, raw: Image.Image) -> Image.Image:
     w, h = raw.size
-    factor = max(1, BOX // max(w, h))
+    box = round(BOX * FIT)
+    factor = max(1, box // max(w, h))
     size = (w * factor, h * factor)
     sprite = raw.resize(size, Image.NEAREST)
     alpha = sprite.getchannel("A")
